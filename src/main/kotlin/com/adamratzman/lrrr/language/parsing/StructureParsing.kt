@@ -1,9 +1,12 @@
 package com.adamratzman.lrrr.language.parsing
 
 import com.adamratzman.lrrr.globalLrrr
+import com.adamratzman.lrrr.language.builtins.GetAllCurrentContextValues
+import com.adamratzman.lrrr.language.builtins.GetLastCurrentContextValue
 import com.adamratzman.lrrr.language.builtins.ParamSplitFunction
 import com.adamratzman.lrrr.language.evaluation.Evaluatable
-import com.adamratzman.lrrr.language.evaluation.EvaluationScope
+import com.adamratzman.lrrr.language.evaluation.ForEvaluationScope
+import com.adamratzman.lrrr.language.evaluation.GenericEvaluationScope
 import com.adamratzman.lrrr.language.types.*
 import com.adamratzman.lrrr.language.utils.*
 
@@ -32,21 +35,46 @@ val contextOpeningCharArray = contextCharArray
     .toMutableList()
     .apply { remove(contextEndChar) }
 
-data class ParseStructure(
+
+class ForParseStructure(
+    children: List<ParseObj>,
+    val initialValue: ParseObj?,
+    val incrementorFunction: ParseObj?,
+    condition: ParseObj?,
+    codeString: String
+) : ParseStructure(children, StructureType.FOR, codeString, condition) {
+    override fun toEvaluatable() =
+        ForEvaluationScope(
+            children.map { it.toEvaluatable() },
+            condition?.toEvaluatable(),
+            incrementorFunction?.toEvaluatable(),
+            initialValue?.toEvaluatable()
+        )
+}
+
+class GenericParseStructure(
+    children: List<ParseObj>,
+    type: StructureType,
+    codeString: String,
+    condition: ParseObj?
+) : ParseStructure(children, type, codeString, condition) {
+    override fun toEvaluatable() =
+        GenericEvaluationScope(children.map { it.toEvaluatable() }, type, condition?.toEvaluatable())
+}
+
+abstract class ParseStructure(
     val children: List<ParseObj>,
     val type: StructureType,
-    private val _codeString: String,
+    codeString: String,
     val condition: ParseObj? = null
-) : ParseObj(_codeString) {
-    override fun toEvaluatable() =
-        EvaluationScope(children.map { it.toEvaluatable() }, type, condition?.toEvaluatable())
-}
+) : ParseObj(codeString)
 
 data class ParseContextSubsection(
     val children: List<ParseObj>,
     private val _code: String
 ) : ParseObj(_code) {
-    override fun toEvaluatable() = EvaluationScope(children.map { it.toEvaluatable() }, StructureType.EMPTY, null)
+    override fun toEvaluatable() =
+        GenericEvaluationScope(children.map { it.toEvaluatable() }, StructureType.EMPTY, null)
 }
 
 open class ParseObj(val code: String) {
@@ -75,16 +103,24 @@ open class ParseObj(val code: String) {
 
             val splitBetweenFunctions = workingCode
                 .splitIndices(functionIndices)
-                .mapIndexed { i, s -> s to globalLrrr.functions.find { it.identifier == workingCode[functionIndices[i]].toString() }!! }.toMutableList()
+                .mapIndexed { i, s ->
+                    s to try {
+                    globalLrrr.functions.find { it.identifier == workingCode[functionIndices[i]].toString() }!!
+                } catch (e: IndexOutOfBoundsException) {
+                    ParamSplitFunction()
+                }
+                }
+                .toMutableList()
 
-            globalLrrr.functions.find { it.identifier == workingCode.last().toString() }?.let { splitBetweenFunctions.add(""  to it) }
+            globalLrrr.functions.find { it.identifier == workingCode.last().toString() }
+                ?.let { splitBetweenFunctions.add("" to it) }
 
             val allLrrrParams = splitBetweenFunctions.map { (before, function) ->
                 val parsed = mutableListOf<LrrrValue>(LrrrFiniteSequence(parseForLrrrValues(before).toMutableList()))
                 parsed.apply { if (function !is ParamSplitFunction) add(function) }
             }.flatten().toMutableList()
 
-            while (allLrrrParams.any { it is LrrrFunction }) {
+            loop@ while (allLrrrParams.any { it is LrrrFunction }) {
                 allLrrrParams.removeIf { it is LrrrFiniteSequence<*> && (it as LrrrFiniteSequence<LrrrValue>).list.isEmpty() }
                 val functionIndex = allLrrrParams.indexOfFirst { it is LrrrFunction }
                 val function = allLrrrParams[functionIndex] as LrrrFunction
@@ -92,14 +128,27 @@ open class ParseObj(val code: String) {
                 when (function) {
                     is NonadicFunction -> allLrrrParams[functionIndex] = FunctionInvocation(listOf(), function)
                     else -> {
-                        if (functionIndex == 0) throw IllegalArgumentException("Function requiring parameters specified at beginning of $workingCode ($code)")
+                        if (functionIndex == 0) {
+                            allLrrrParams[functionIndex] = FunctionInvocation(
+                                listOf(
+                                    if (function is MonadicFunction) FunctionInvocation(
+                                        listOf(),
+                                        globalLrrr.functions.first { it is GetLastCurrentContextValue })
+                                    else FunctionInvocation(
+                                        listOf(),
+                                        globalLrrr.functions.first { it is GetAllCurrentContextValues })
+                                ),
+                                function
+                            )
+                            continue@loop
+                        }
                         val arguments = allLrrrParams[functionIndex - 1]
                         // ?: throw IllegalArgumentException("${allLrrrParams[functionIndex - 1]} not a finite sequence")
                         // if (arguments.isEmpty()) throw IllegalArgumentException("Non-Nonadic Function invocation requires at least 1 argument ($function) ($workingCode) ($code)")
 
                         when (function) {
                             is NonadicFunction -> {
-                                allLrrrParams[functionIndex] = FunctionInvocation(listOf(),function)
+                                allLrrrParams[functionIndex] = FunctionInvocation(listOf(), function)
                             }
                             is MonadicFunction -> {
                                 if (arguments is FunctionInvocation) {
@@ -175,7 +224,7 @@ open class ParseObj(val code: String) {
         }
 
 
-        return EvaluationScope(lrrrValues, StructureType.EMPTY, null)
+        return GenericEvaluationScope(lrrrValues, StructureType.EMPTY, null)
     }
 }
 
@@ -209,12 +258,41 @@ fun parseStructures(program: String): List<ParseObj> {
             parseObjects.addAll(createParseObjectsNoStructures(program.substring(0, min)))
         }
 
-        val scope = ParseStructure(parseStructures(contextCode), StructureType.EMPTY, contextCode)
+        val scope = GenericParseStructure(parseStructures(contextCode), StructureType.EMPTY, contextCode, null)
         parseObjects.add(scope)
+    } else if (program[min] == forStartChar) {
+        val beforeForStart = program.substring(0, min)
+
+        val beforeSplitByComma = beforeForStart.split(",")
+
+        val firstParseObjects = createParseObjectsNoStructures(beforeSplitByComma.first())
+
+        parseObjects.addAll(
+            firstParseObjects.subList(
+                0,
+                firstParseObjects.lastIndex
+            )
+        )
+
+        val condition = firstParseObjects.last()
+
+        val incrementorFunction =
+            if (beforeSplitByComma.size < 2) null else createParseObjectsNoStructures(beforeSplitByComma[1]).first()
+
+        val initialValueParseObj =
+            if (beforeSplitByComma.size < 3) null else createParseObjectsNoStructures(beforeSplitByComma[2]).first()
+
+        val forStructure = ForParseStructure(
+            parseStructures(contextCode),
+            initialValueParseObj,
+            incrementorFunction,
+            condition,
+            program.substring(0, lastEndContextIndex)
+        )
+
     } else {
         val beforeContextCode = program.substring(0, min)
         val parseObjectsBefore = createParseObjectsNoStructures(beforeContextCode)
-
 
         if (program[min] != elseChar) parseObjects.addAll(
             parseObjectsBefore.subList(
@@ -226,7 +304,7 @@ fun parseStructures(program: String): List<ParseObj> {
 
         val condition = if (program[min] != elseChar) parseObjectsBefore.last() else null
 
-        val structure = ParseStructure(
+        val structure = GenericParseStructure(
             parseStructures(contextCode),
             when (program[min]) {
                 ifStartChar -> StructureType.IF

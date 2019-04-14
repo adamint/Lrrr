@@ -3,7 +3,11 @@ package com.adamratzman.lrrr.language.types
 import com.adamratzman.lrrr.language.evaluation.Evaluatable
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 
-data class LrrrVariable(var identifier: String?, var value: LrrrValue)
+data class LrrrVariable(var identifier: String?, var value: LrrrValue):LrrrValue() {
+    override fun evaluate(context: LrrrContext): LrrrValue = this
+
+    val valueAsLrrrNumber get() = value as LrrrNumber
+}
 
 abstract class LrrrValue : Evaluatable
 

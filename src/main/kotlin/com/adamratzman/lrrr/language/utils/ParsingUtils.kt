@@ -1,14 +1,17 @@
 package com.adamratzman.lrrr.language.utils
 
 import com.adamratzman.lrrr.globalLrrr
+import com.adamratzman.lrrr.language.builtins.LrrrVariableResolverFunction
 import com.adamratzman.lrrr.language.parsing.convertToNumber
 import com.adamratzman.lrrr.language.parsing.findNextUnescapedStringCharacter
 import com.adamratzman.lrrr.language.parsing.toLrrValue
-import com.adamratzman.lrrr.language.types.LrrrFunction
-import com.adamratzman.lrrr.language.types.LrrrNull
-import com.adamratzman.lrrr.language.types.LrrrValue
-import com.adamratzman.lrrr.language.types.LrrrVoid
-import java.lang.IllegalStateException
+import com.adamratzman.lrrr.language.types.*
+
+open class LrrrException(message: String?) : Exception(message)
+
+class NeedsArgumentException(message: String?) : LrrrException(message)
+
+class VariableNotFoundException(message: String?) : LrrrException(message)
 
 open class Location(val start: Int, val end: Int) {
     override fun toString() = "[$start, $end]"
@@ -58,7 +61,6 @@ fun parseForLrrrValues(code: String): List<LrrrValue> {
 
     var workingCode = code
     while (workingCode.isNotEmpty()) {
-        println(workingCode)
         when {
             workingCode[0] == 't' || workingCode[0] == 'f' -> {
                 values.add((workingCode[0] == 't').toLrrValue())
@@ -95,10 +97,20 @@ fun parseForLrrrValues(code: String): List<LrrrValue> {
                 }
             }
             else -> {
-                val decimalString = workingCode.takeWhile { it in '0'..'9' || it in 'A'..'F' || it == '.' }
-                val decimal = decimalString.convertToNumber() ?: throw IllegalStateException("Unknown state $decimalString in $workingCode ($code)")
-                values.add(decimal.toLrrValue())
-                workingCode = workingCode.substring(decimalString.length)
+                try {
+                    val decimalString = workingCode.takeWhile { it in '0'..'9' || it in 'A'..'F' || it == '.' }
+                    val decimal = decimalString.convertToNumber()
+                        ?: throw IllegalStateException("Unknown state $decimalString in $workingCode ($code)")
+                    values.add(decimal.toLrrValue())
+                    workingCode = workingCode.substring(decimalString.length)
+                } catch (e: IllegalStateException) {
+                    values.add(
+                        FunctionInvocation(
+                            listOf(LrrrString(workingCode[0].toString())),
+                            globalLrrr.functions.first { it is LrrrVariableResolverFunction })
+                    )
+                    workingCode = workingCode.substring(1)
+                }
             }
         }
     }

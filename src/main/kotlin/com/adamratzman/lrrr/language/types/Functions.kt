@@ -5,7 +5,7 @@ import com.adamratzman.lrrr.language.parsing.LrrrContext
 
 abstract class LrrrFunction(val identifier: String, val shouldEvaluateParameters: Boolean):LrrrValue(){
     abstract fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue
-    override fun evaluate(context: LrrrContext) = throw IllegalStateException("Function cannot be evaluated without list of arguments")
+    override fun evaluate(context: LrrrContext) = this
 }
 
 /*
