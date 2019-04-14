@@ -26,12 +26,12 @@ class ParamSplitFunction : NonadicFunction(",", true) {
 
 class GetLastCurrentContextValue : NonadicFunction("ð",true) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        return context.contextValues.last()
+        return context.contextValues.last().value
     }
 }
 
 class GetAllCurrentContextValues : NonadicFunction("Ƒ",true) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        return LrrrFiniteSequence(context.contextValues)
+        return LrrrFiniteSequence(context.contextValues.map { it.value }.toMutableList())
     }
 }

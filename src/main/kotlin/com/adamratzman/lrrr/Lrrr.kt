@@ -7,6 +7,7 @@ import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.ParseObj
 import com.adamratzman.lrrr.language.parsing.parseStructures
 import com.adamratzman.lrrr.language.types.LrrrVariable
+import com.adamratzman.lrrr.language.types.LrrrVoid
 import com.adamratzman.lrrr.language.utils.getAllFunctions
 import com.adamratzman.lrrr.language.utils.parseForLrrrValues
 import java.util.*
@@ -42,8 +43,9 @@ class Lrrr {
         print(">>> ")
         interpreter.loadVariableNames(scanner.nextLine())
 
-        println("-----------\nEvaluating\n-----------")
-        println(interpreter.evaluate())
+        println("Evaluating...")
+        val value = interpreter.evaluate()
+        if (value !is LrrrVoid) println(value)
     }
 }
 
@@ -62,6 +64,7 @@ class Interpreter private constructor(val lrrr: Lrrr) {
 
     fun loadCode(code: String) {
         this.code = code
+        println(parseCodeToEvaluatables(code))
     }
 
     fun parseCodeToEvaluatables(code: String): EvaluationScope =

@@ -27,6 +27,6 @@ abstract class PolyadicFunction(identifier: String, shouldEvaluateParameters: Bo
 
 data class FunctionInvocation(val parameters: List<Evaluatable>, val function: LrrrFunction) : LrrrValue() {
     override fun evaluate(context: LrrrContext): LrrrValue {
-        return function.evaluate(parameters.map { it.evaluate(context.copy()) }, context)
+        return function.evaluate(parameters.map { it.evaluate(context) }, context)
     }
 }

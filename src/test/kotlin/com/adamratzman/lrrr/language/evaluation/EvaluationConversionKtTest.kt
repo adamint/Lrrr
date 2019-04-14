@@ -8,7 +8,7 @@ internal class EvaluationConversionKtTest {
             /*replaceShorteners("""
                 #>|?#P@|Pç"a"P
             """.trimIndent().trim())*/
-        ">|?lfP;2.0P"
+        "<#(iP"
 
     @Test
     fun toEvaluatableObject() {

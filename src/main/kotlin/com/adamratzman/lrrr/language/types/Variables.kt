@@ -76,3 +76,4 @@ class LrrrBoolean private constructor(val boolean: Boolean) : LrrrType() {
     }
 }
 
+fun lrrrBooleanOf(boolean: Boolean) = if (boolean) LrrrBoolean.lrrrTrue else LrrrBoolean.lrrrFalse

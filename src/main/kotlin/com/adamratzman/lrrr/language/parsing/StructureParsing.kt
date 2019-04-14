@@ -36,13 +36,13 @@ val contextOpeningCharArray = contextCharArray
     .apply { remove(contextEndChar) }
 
 
-class ForParseStructure(
-    children: List<ParseObj>,
+data class ForParseStructure(
+    val _children: List<ParseObj>,
     val initialValue: ParseObj?,
     val incrementorFunction: ParseObj?,
-    condition: ParseObj?,
-    codeString: String
-) : ParseStructure(children, StructureType.FOR, codeString, condition) {
+    val _condition: ParseObj?,
+    val _codeString: String
+) : ParseStructure(_children, StructureType.FOR, _codeString, _condition) {
     override fun toEvaluatable() =
         ForEvaluationScope(
             children.map { it.toEvaluatable() },
@@ -52,12 +52,12 @@ class ForParseStructure(
         )
 }
 
-class GenericParseStructure(
-    children: List<ParseObj>,
-    type: StructureType,
-    codeString: String,
-    condition: ParseObj?
-) : ParseStructure(children, type, codeString, condition) {
+data class GenericParseStructure(
+    val _children: List<ParseObj>,
+    val _type: StructureType,
+    val _codeString: String,
+    val _condition: ParseObj?
+) : ParseStructure(_children, _type, _codeString, _condition) {
     override fun toEvaluatable() =
         GenericEvaluationScope(children.map { it.toEvaluatable() }, type, condition?.toEvaluatable())
 }
@@ -129,19 +129,15 @@ open class ParseObj(val code: String) {
                     is NonadicFunction -> allLrrrParams[functionIndex] = FunctionInvocation(listOf(), function)
                     else -> {
                         if (functionIndex == 0) {
-                            allLrrrParams[functionIndex] = FunctionInvocation(
-                                listOf(
-                                    if (function is MonadicFunction) FunctionInvocation(
-                                        listOf(),
-                                        globalLrrr.functions.first { it is GetLastCurrentContextValue })
-                                    else FunctionInvocation(
-                                        listOf(),
-                                        globalLrrr.functions.first { it is GetAllCurrentContextValues })
-                                ),
-                                function
-                            )
+                            if (function !is PolyadicFunction) {
+                                allLrrrParams.add(0,FunctionInvocation(listOf(),GetLastCurrentContextValue()))
+                            } else {
+                                allLrrrParams.add(0,FunctionInvocation(listOf(),GetAllCurrentContextValues()))
+                            }
+
                             continue@loop
                         }
+
                         val arguments = allLrrrParams[functionIndex - 1]
                         // ?: throw IllegalArgumentException("${allLrrrParams[functionIndex - 1]} not a finite sequence")
                         // if (arguments.isEmpty()) throw IllegalArgumentException("Non-Nonadic Function invocation requires at least 1 argument ($function) ($workingCode) ($code)")
@@ -192,8 +188,9 @@ open class ParseObj(val code: String) {
                                 if (argumentList.size != 2) {
                                     if (functionIndex == allLrrrParams.lastIndex) throw IllegalArgumentException("No last diadic argument in $workingCode")
                                     val nextArgument = allLrrrParams[functionIndex + 1]
-                                    if (nextArgument is NonadicFunction) {
-                                        argumentList.add(FunctionInvocation(listOf(), nextArgument))
+                                    if (nextArgument is NonadicFunction || nextArgument is FunctionInvocation) {
+                                        if (nextArgument is NonadicFunction) argumentList.add(FunctionInvocation(listOf(), nextArgument))
+                                        else argumentList.add(nextArgument)
                                         argumentIndicesToDelete.add(functionIndex + 1)
                                     } else if (nextArgument is LrrrFunction) throw IllegalArgumentException("Non-nonadic arg specified $workingCode")
                                     else {
@@ -253,70 +250,75 @@ fun parseStructures(program: String): List<ParseObj> {
             ?: program.length
 
     val contextCode = program.substring(min + 1, lastEndContextIndex)
-    if (program[min] == contextStartChar) {
-        if (min != 0) {
-            parseObjects.addAll(createParseObjectsNoStructures(program.substring(0, min)))
+    when {
+        program[min] == contextStartChar -> {
+            if (min != 0) {
+                parseObjects.addAll(createParseObjectsNoStructures(program.substring(0, min)))
+            }
+
+            val scope = GenericParseStructure(parseStructures(contextCode), StructureType.EMPTY, contextCode, null)
+            parseObjects.add(scope)
         }
+        program[min] == forStartChar -> {
+            val beforeForStart = program.substring(0, min)
 
-        val scope = GenericParseStructure(parseStructures(contextCode), StructureType.EMPTY, contextCode, null)
-        parseObjects.add(scope)
-    } else if (program[min] == forStartChar) {
-        val beforeForStart = program.substring(0, min)
+            val beforeSplitByComma = beforeForStart.split(",")
 
-        val beforeSplitByComma = beforeForStart.split(",")
+            val firstParseObjects = createParseObjectsNoStructures(beforeSplitByComma.first())
 
-        val firstParseObjects = createParseObjectsNoStructures(beforeSplitByComma.first())
-
-        parseObjects.addAll(
-            firstParseObjects.subList(
-                0,
-                firstParseObjects.lastIndex
+            parseObjects.addAll(
+                firstParseObjects.subList(
+                    0,
+                    firstParseObjects.lastIndex
+                )
             )
-        )
 
-        val condition = firstParseObjects.last()
+            val condition = firstParseObjects.last()
 
-        val incrementorFunction =
-            if (beforeSplitByComma.size < 2) null else createParseObjectsNoStructures(beforeSplitByComma[1]).first()
+            val incrementorFunction =
+                if (beforeSplitByComma.size < 2) null else createParseObjectsNoStructures(beforeSplitByComma[1]).first()
 
-        val initialValueParseObj =
-            if (beforeSplitByComma.size < 3) null else createParseObjectsNoStructures(beforeSplitByComma[2]).first()
+            val initialValueParseObj =
+                if (beforeSplitByComma.size < 3) null else createParseObjectsNoStructures(beforeSplitByComma[2]).first()
 
-        val forStructure = ForParseStructure(
-            parseStructures(contextCode),
-            initialValueParseObj,
-            incrementorFunction,
-            condition,
-            program.substring(0, lastEndContextIndex)
-        )
-
-    } else {
-        val beforeContextCode = program.substring(0, min)
-        val parseObjectsBefore = createParseObjectsNoStructures(beforeContextCode)
-
-        if (program[min] != elseChar) parseObjects.addAll(
-            parseObjectsBefore.subList(
-                0,
-                parseObjectsBefore.lastIndex
+            val forStructure = ForParseStructure(
+                parseStructures(contextCode),
+                initialValueParseObj,
+                incrementorFunction,
+                condition,
+                program.substring(0, lastEndContextIndex)
             )
-        )
-        else parseObjects.addAll(parseObjectsBefore)
+            parseObjects.add(forStructure)
 
-        val condition = if (program[min] != elseChar) parseObjectsBefore.last() else null
+        }
+        else -> {
+            val beforeContextCode = program.substring(0, min)
+            val parseObjectsBefore = createParseObjectsNoStructures(beforeContextCode)
 
-        val structure = GenericParseStructure(
-            parseStructures(contextCode),
-            when (program[min]) {
-                ifStartChar -> StructureType.IF
-                forStartChar -> StructureType.FOR
-                notStartChar -> StructureType.NOT
-                elseChar -> StructureType.ELSE
-                else -> throw IllegalArgumentException("Unknown context char ${program[min]}")
-            },
-            contextCode,
-            condition
-        )
-        parseObjects.add(structure)
+            if (program[min] != elseChar) parseObjects.addAll(
+                parseObjectsBefore.subList(
+                    0,
+                    parseObjectsBefore.lastIndex
+                )
+            )
+            else parseObjects.addAll(parseObjectsBefore)
+
+            val condition = if (program[min] != elseChar) parseObjectsBefore.last() else null
+
+            val structure = GenericParseStructure(
+                parseStructures(contextCode),
+                when (program[min]) {
+                    ifStartChar -> StructureType.IF
+                    forStartChar -> StructureType.FOR
+                    notStartChar -> StructureType.NOT
+                    elseChar -> StructureType.ELSE
+                    else -> throw IllegalArgumentException("Unknown context char ${program[min]}")
+                },
+                contextCode,
+                condition
+            )
+            parseObjects.add(structure)
+        }
     }
 
     if (lastEndContextIndex != program.length) {
