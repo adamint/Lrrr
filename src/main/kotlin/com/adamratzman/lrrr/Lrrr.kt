@@ -12,10 +12,17 @@ import com.adamratzman.lrrr.language.utils.getAllFunctions
 import com.adamratzman.lrrr.language.utils.parseForLrrrValues
 import java.util.*
 
+val version = "0.0.1"
+
 val globalLrrr = Lrrr()
 
 fun main() {
-    println(">>> Lrrr REPL (Version 0.0)")
+   /* globalLrrr.functions.sortedBy { it.identifier.getOrNull(0)?.toInt() ?: 0 }
+        .joinToString("\n") { it.identifier + ": " + it::class.simpleName }
+        .let { println("Function List:\n$it") }
+    */
+
+    println(">>> Lrrr REPL (Version $version)")
 
     val lrrr = Lrrr()
     while (true) {

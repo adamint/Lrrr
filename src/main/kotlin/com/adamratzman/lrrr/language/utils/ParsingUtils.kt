@@ -61,7 +61,7 @@ fun parseForLrrrValues(code: String): List<LrrrValue> {
     val values = mutableListOf<LrrrValue>()
 
     val codeStringLocations = findStringLocations(code)
-    val listSplit = code.splitByFilter { i, c -> c == '_' && !isCharInString(i,codeStringLocations) }
+    val listSplit = code.splitByFilter { i, c -> c == '_' && !isCharInString(i, codeStringLocations) }
     if (listSplit.size > 1) return listSplit.map { parseForLrrrValues(it) }.flatten()
 
     var workingCode = code
@@ -104,7 +104,8 @@ fun parseForLrrrValues(code: String): List<LrrrValue> {
             }
             else -> {
                 workingCode = try {
-                    val decimalString = workingCode.takeWhile { it in '0'..'9' || it in 'A'..'F' || it == '.' || it == '-' }
+                    val decimalString =
+                        workingCode.takeWhile { it in '0'..'9' || it in 'A'..'F' || it == '.' || it == '-' }
                     val decimal = decimalString.convertToNumber()
                         ?: throw IllegalStateException("Unknown state $decimalString in $workingCode ($code)")
                     values.add(decimal.toLrrValue())

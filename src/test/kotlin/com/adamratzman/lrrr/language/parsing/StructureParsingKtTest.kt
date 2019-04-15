@@ -31,4 +31,9 @@ internal class StructureParsingKtTest {
         println(splitParameters("8R,5,'as"))
         println(splitParameters("\"h,hel,asdfl,\",4,,'a,"))
     }
+
+    @Test
+    fun isCharInCharDeclaration() {
+        println(isCharInCharDeclaration(2, "9'a"))
+    }
 }

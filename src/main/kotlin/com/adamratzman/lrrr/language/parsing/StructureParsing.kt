@@ -92,8 +92,13 @@ open class ParseObj(val code: String) {
         while (workingCode.isNotEmpty()) {
             workingCode = workingCode.trim()
 
+            val stringLocations = findStringLocations(workingCode)
+
             val functionIndices =
-                workingCode.filterMapIndex { _, c -> c.toString() in globalLrrr.functions.map { it.identifier } }
+                workingCode.filterMapIndex { index, c ->
+                   ! isCharInString(index, stringLocations) && !isCharInCharDeclaration(index, workingCode)
+                            && c.toString() in globalLrrr.functions.map { it.identifier }
+                }
 
             if (functionIndices.isEmpty()) {
                 lrrrValues.addAll(parseForLrrrValues(workingCode))
@@ -105,10 +110,10 @@ open class ParseObj(val code: String) {
                 .splitIndices(functionIndices)
                 .mapIndexed { i, s ->
                     s to try {
-                    globalLrrr.functions.find { it.identifier == workingCode[functionIndices[i]].toString() }!!
-                } catch (e: IndexOutOfBoundsException) {
-                    ParamSplitFunction()
-                }
+                        globalLrrr.functions.find { it.identifier == workingCode[functionIndices[i]].toString() }!!
+                    } catch (e: IndexOutOfBoundsException) {
+                        ParamSplitFunction()
+                    }
                 }
                 .toMutableList()
 
@@ -130,9 +135,9 @@ open class ParseObj(val code: String) {
                     else -> {
                         if (functionIndex == 0) {
                             if (function !is PolyadicFunction) {
-                                allLrrrParams.add(0,FunctionInvocation(listOf(),GetLastCurrentContextValue()))
+                                allLrrrParams.add(0, FunctionInvocation(listOf(), GetLastCurrentContextValue()))
                             } else {
-                                allLrrrParams.add(0,FunctionInvocation(listOf(),GetAllCurrentContextValues()))
+                                allLrrrParams.add(0, FunctionInvocation(listOf(), GetAllCurrentContextValues()))
                             }
 
                             continue@loop
@@ -189,7 +194,12 @@ open class ParseObj(val code: String) {
                                     if (functionIndex == allLrrrParams.lastIndex) throw IllegalArgumentException("No last diadic argument in $workingCode")
                                     val nextArgument = allLrrrParams[functionIndex + 1]
                                     if (nextArgument is NonadicFunction || nextArgument is FunctionInvocation) {
-                                        if (nextArgument is NonadicFunction) argumentList.add(FunctionInvocation(listOf(), nextArgument))
+                                        if (nextArgument is NonadicFunction) argumentList.add(
+                                            FunctionInvocation(
+                                                listOf(),
+                                                nextArgument
+                                            )
+                                        )
                                         else argumentList.add(nextArgument)
                                         argumentIndicesToDelete.add(functionIndex + 1)
                                     } else if (nextArgument is LrrrFunction) throw IllegalArgumentException("Non-nonadic arg specified $workingCode")
@@ -235,7 +245,12 @@ fun parseStructures(program: String): List<ParseObj> {
     val stringLocations = findStringLocations(program)
     val contextLocations = program
         .findAllLocations(*contextOpeningCharArray.toCharArray())
-        .filter { location -> !isCharInString(location, stringLocations) }
+        .filter { location ->
+            !isCharInString(location, stringLocations) && !isCharInCharDeclaration(
+                location,
+                program
+            )
+        }
 
     if (contextLocations.isEmpty()) {
         return createParseObjectsNoStructures(program)
@@ -276,7 +291,9 @@ fun parseStructures(program: String): List<ParseObj> {
             val condition = firstParseObjects.last()
 
             val incrementorFunction =
-                if (beforeSplitByComma.size < 2 || beforeSplitByComma[1].isEmpty()) null else createParseObjectsNoStructures(beforeSplitByComma[1]).first()
+                if (beforeSplitByComma.size < 2 || beforeSplitByComma[1].isEmpty()) null else createParseObjectsNoStructures(
+                    beforeSplitByComma[1]
+                ).first()
 
             val initialValueParseObj =
                 if (beforeSplitByComma.size < 3) null else createParseObjectsNoStructures(beforeSplitByComma[2]).first()
@@ -353,6 +370,9 @@ fun getCorrespondingIndex(string: String, startChars: List<Char>, endChars: List
 }
 
 fun isCharInString(index: Int, locations: List<StringLocation>) = locations.any { index in it.start..it.end }
+
+fun isCharInCharDeclaration(index: Int, string: String) = index > 0 && string[index - 1] == '\''
+        && if (index > 1) string[index - 1] != '\\' else true
 
 fun String.splitIf(delimeter: Char, condition: (Int) -> Boolean): List<String> {
     val substrings = mutableListOf<String>()

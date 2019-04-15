@@ -44,3 +44,5 @@ class GetFromSequenceByIndex : PolyadicFunction("g",true) {
         else return LrrrFiniteSequence(result.toMutableList())
     }
 }
+
+// class Reverse:MonadicFunction("")
