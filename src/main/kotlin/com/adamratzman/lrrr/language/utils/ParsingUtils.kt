@@ -97,19 +97,19 @@ fun parseForLrrrValues(code: String): List<LrrrValue> {
                 }
             }
             else -> {
-                try {
-                    val decimalString = workingCode.takeWhile { it in '0'..'9' || it in 'A'..'F' || it == '.' }
+                workingCode = try {
+                    val decimalString = workingCode.takeWhile { it in '0'..'9' || it in 'A'..'F' || it == '.' || it == '-' }
                     val decimal = decimalString.convertToNumber()
                         ?: throw IllegalStateException("Unknown state $decimalString in $workingCode ($code)")
                     values.add(decimal.toLrrValue())
-                    workingCode = workingCode.substring(decimalString.length)
+                    workingCode.substring(decimalString.length)
                 } catch (e: IllegalStateException) {
                     values.add(
                         FunctionInvocation(
                             listOf(LrrrString(workingCode[0].toString())),
                             globalLrrr.functions.first { it is LrrrVariableResolverFunction })
                     )
-                    workingCode = workingCode.substring(1)
+                    workingCode.substring(1)
                 }
             }
         }

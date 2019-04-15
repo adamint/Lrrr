@@ -1,4 +1,8 @@
 # Lrrr
 
-__I am Lrrr, ruler of the planet Omicron Persei 8.__ In all seriousness, Lrrr is a recreational golfing language designed to be easily
+Lrrr is a recreational golfing language designed to be easily
 customizable.
+
+Current pressing issues:
+- Basic mathematical functions have not yet been added (though this is trivial)
+- We need sequence generation functions, along with sequence manipulation functions added to the stlib
