@@ -276,7 +276,7 @@ fun parseStructures(program: String): List<ParseObj> {
             val condition = firstParseObjects.last()
 
             val incrementorFunction =
-                if (beforeSplitByComma.size < 2) null else createParseObjectsNoStructures(beforeSplitByComma[1]).first()
+                if (beforeSplitByComma.size < 2 || beforeSplitByComma[1].isEmpty()) null else createParseObjectsNoStructures(beforeSplitByComma[1]).first()
 
             val initialValueParseObj =
                 if (beforeSplitByComma.size < 3) null else createParseObjectsNoStructures(beforeSplitByComma[2]).first()

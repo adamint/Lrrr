@@ -20,4 +20,6 @@ data class LrrrContext(val contextValues: MutableList<LrrrVariable>, val parentC
 
         throw VariableNotFoundException("Variable not found")
     }
+
+    fun getAllContextsValues(): List<LrrrVariable> = if (parentContext == null) contextValues else contextValues + parentContext.getAllContextsValues()
 }

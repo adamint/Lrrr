@@ -1,9 +1,7 @@
 package com.adamratzman.lrrr.language.builtins
 
 import com.adamratzman.lrrr.language.parsing.LrrrContext
-import com.adamratzman.lrrr.language.types.LrrrString
-import com.adamratzman.lrrr.language.types.LrrrValue
-import com.adamratzman.lrrr.language.types.MonadicFunction
+import com.adamratzman.lrrr.language.types.*
 
 class LrrrVariableResolverFunction : MonadicFunction("", false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {

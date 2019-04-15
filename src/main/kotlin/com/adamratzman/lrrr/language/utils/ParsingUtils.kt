@@ -4,6 +4,7 @@ import com.adamratzman.lrrr.globalLrrr
 import com.adamratzman.lrrr.language.builtins.LrrrVariableResolverFunction
 import com.adamratzman.lrrr.language.parsing.convertToNumber
 import com.adamratzman.lrrr.language.parsing.findNextUnescapedStringCharacter
+import com.adamratzman.lrrr.language.parsing.isCharInString
 import com.adamratzman.lrrr.language.parsing.toLrrValue
 import com.adamratzman.lrrr.language.types.*
 
@@ -59,7 +60,12 @@ fun findFirstFunction(code: String): Pair<Int, LrrrFunction>? {
 fun parseForLrrrValues(code: String): List<LrrrValue> {
     val values = mutableListOf<LrrrValue>()
 
+    val codeStringLocations = findStringLocations(code)
+    val listSplit = code.splitByFilter { i, c -> c == '_' && !isCharInString(i,codeStringLocations) }
+    if (listSplit.size > 1) return listSplit.map { parseForLrrrValues(it) }.flatten()
+
     var workingCode = code
+
     while (workingCode.isNotEmpty()) {
         when {
             workingCode[0] == 't' || workingCode[0] == 'f' -> {

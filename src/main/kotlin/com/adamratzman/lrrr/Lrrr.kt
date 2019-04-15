@@ -15,6 +15,8 @@ import java.util.*
 val globalLrrr = Lrrr()
 
 fun main() {
+    println(">>> Lrrr REPL (Version 0.0)")
+
     val lrrr = Lrrr()
     while (true) {
         lrrr.loadAndEvaluateProgram()
@@ -29,7 +31,6 @@ class Lrrr {
     fun loadAndEvaluateProgram() {
         val scanner = Scanner(System.`in`)
         val interpreter = Interpreter.createInterpreter(this)
-        println("~ Lrrr REPL ~")
 
         println("Enter code")
         print(">>> ")

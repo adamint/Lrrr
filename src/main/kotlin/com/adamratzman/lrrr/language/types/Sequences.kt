@@ -9,7 +9,7 @@ abstract class LrrrSequence<T> : LrrrType() {
     abstract fun get(index: Int): T
 }
 
-open class LrrrFiniteSequence<T>(val list: MutableList<T>) : LrrrSequence<T>() {
+open class LrrrFiniteSequence<T>(var list: MutableList<T>) : LrrrSequence<T>() {
     override fun takeFirst(n: Int) = list.take(n)
     override fun take(start: Int, end: Int) = list.subList(start, end)
 

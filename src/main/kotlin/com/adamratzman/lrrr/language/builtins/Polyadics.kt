@@ -1,7 +1,6 @@
 package com.adamratzman.lrrr.language.builtins
 
 import com.adamratzman.lrrr.language.parsing.LrrrContext
-import com.adamratzman.lrrr.language.parsing.toLrrValue
 import com.adamratzman.lrrr.language.types.LrrrFiniteSequence
 import com.adamratzman.lrrr.language.types.LrrrValue
 import com.adamratzman.lrrr.language.types.LrrrVoid
