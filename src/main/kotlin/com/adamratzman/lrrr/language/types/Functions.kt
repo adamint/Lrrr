@@ -3,9 +3,13 @@ package com.adamratzman.lrrr.language.types
 import com.adamratzman.lrrr.language.evaluation.Evaluatable
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 
-abstract class LrrrFunction(val identifier: String, val shouldEvaluateParameters: Boolean):LrrrValue(){
+abstract class LrrrFunction(val identifier: String, val shouldEvaluateParameters: Boolean) : LrrrValue() {
     abstract fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue
     override fun evaluate(context: LrrrContext) = this
+}
+
+abstract class ReplacementFunction(identifier: String, val replaceWith: String) : LrrrFunction(identifier, true) {
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) = LrrrVoid.lrrrVoid
 }
 
 /*

@@ -252,8 +252,24 @@ enum class StructureType {
 }
 
 
-fun parseStructures(program: String): List<ParseObj> {
-    val stringLocations = findStringLocations(program)
+fun parseStructures(_program: String): List<ParseObj> {
+    var program = _program
+    var stringLocations = findStringLocations(program)
+
+    val replacables = globalLrrr.functions.filter { it is ReplacementFunction }.map { it as ReplacementFunction }
+
+    replacables.forEach { replacableFunction ->
+        var i = 0
+        while (i <= program.length - replacableFunction.identifier.length) {
+            if (replacableFunction.identifier == program.substring(i,i+replacableFunction.identifier.length)
+                && !isCharInCharDeclaration(i,program) && !isCharInString(i,stringLocations))  {
+                program = program.substring(0, i) + replacableFunction.replaceWith + program.substring(i + replacableFunction.identifier.length)
+                stringLocations = findStringLocations(program)
+                i = 0
+            } else i++
+        }
+    }
+
     val contextLocations = program
         .findAllLocations(*contextOpeningCharArray.toCharArray())
         .filter { location ->

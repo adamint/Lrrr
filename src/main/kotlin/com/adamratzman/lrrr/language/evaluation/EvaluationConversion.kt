@@ -1,12 +1,10 @@
 package com.adamratzman.lrrr.language.evaluation
 
-import com.adamratzman.lrrr.Lrrr
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.ParseObj
 import com.adamratzman.lrrr.language.parsing.StructureType
 import com.adamratzman.lrrr.language.parsing.toLrrValue
 import com.adamratzman.lrrr.language.types.*
-import com.adamratzman.lrrr.language.utils.toSequence
 
 interface Evaluatable {
     fun evaluate(context: LrrrContext): LrrrValue
