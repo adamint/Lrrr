@@ -1,14 +1,18 @@
 package com.adamratzman.lrrr.language.evaluation
 
+import com.adamratzman.lrrr.Lrrr
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.ParseObj
 import com.adamratzman.lrrr.language.parsing.StructureType
+import com.adamratzman.lrrr.language.parsing.toLrrValue
 import com.adamratzman.lrrr.language.types.*
+import com.adamratzman.lrrr.language.utils.toSequence
 
 interface Evaluatable {
     fun evaluate(context: LrrrContext): LrrrValue
 }
 
+@Suppress("UNCHECKED_CAST")
 data class ForEvaluationScope(
     val _objects: List<Evaluatable>,
     val _condition: Evaluatable?,
@@ -16,12 +20,57 @@ data class ForEvaluationScope(
     val initialVariable: Evaluatable?
 ) : EvaluationScope(_objects, StructureType.FOR, _condition) {
     override fun evaluate(context: LrrrContext): LrrrValue {
+        try {
+            val evaluatedValue = condition?.evaluate(context) ?: LrrrBoolean.lrrrFalse
+
+            val results = mutableListOf<LrrrValue>()
+
+            if (evaluatedValue is LrrrNumber || evaluatedValue is LrrrString || evaluatedValue is LrrrFiniteSequence<*>) {
+                val sequence = if (evaluatedValue is LrrrNumber) {
+                    LrrrFiniteSequence((1..evaluatedValue.numberInteger).map { it.toLrrValue() }.toMutableList())
+                } else evaluatedValue as LrrrFiniteSequence<LrrrValue>
+
+                results.addAll(sequence.list.mapIndexed { i, value ->
+                    val forContext = context.newChildContext.apply {
+                        contextValues.add(LrrrVariable("i", i.toLrrValue()))
+                        contextValues.add(LrrrVariable("j", (i + 1).toLrrValue()))
+                        contextValues.add(LrrrVariable("v", value))
+                    }
+
+                    objects.map { inner -> inner.evaluate(forContext) }
+                        .let { result -> if (result.size == 1) result.first() else LrrrFiniteSequence(result.filter { it !is LrrrVoid }.toMutableList()) }
+                })
+            } else if (evaluatedValue is LrrrBoolean) {
+                if (evaluatedValue.boolean) {
+                    var i = 0
+                    while (true) {
+                        val forContext = context.newChildContext.apply {
+                            contextValues.add(LrrrVariable("i", i.toLrrValue()))
+                            contextValues.add(LrrrVariable("j", (i + 1).toLrrValue()))
+                        }
+                        objects.map { inner -> inner.evaluate(forContext) }
+                            .let { result -> if (result.size == 1) result.first() else LrrrFiniteSequence(result.filter { it !is LrrrVoid }.toMutableList()) }
+                        i++
+                    }
+                }
+            }
+
+
+            return when {
+                results.isEmpty() -> LrrrVoid.lrrrVoid
+                results.size == 1 -> results[0]
+                else -> LrrrFiniteSequence(results.toMutableList())
+            }
+        } catch (ignored: Exception) {
+        }
+
         val initial = initialVariable?.evaluate(context)?.let { evaluatedVariable ->
             evaluatedVariable as? LrrrNumber
                 ?: evaluatedVariable as? LrrrVariable
                 ?: (evaluatedVariable as? LrrrString)?.string?.length?.let { LrrrNumber(it.toDouble()) }
                 ?: (evaluatedVariable as? LrrrChar)?.number?.let { LrrrNumber(it) }
                 ?: (evaluatedVariable as? LrrrFiniteSequence<*>)?.list?.size?.let { LrrrNumber(it.toDouble()) }
+                ?: (evaluatedVariable as? LrrrBoolean)?.let { (-1).toLrrValue() }
                 ?: throw IllegalArgumentException("Evaluated variable $evaluatedVariable in $this is not a string, char, sequence, or number!")
         } ?: LrrrNumber(0.toDouble())
 

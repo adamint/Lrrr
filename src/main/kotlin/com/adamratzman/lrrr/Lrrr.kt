@@ -12,7 +12,7 @@ import com.adamratzman.lrrr.language.utils.getAllFunctions
 import com.adamratzman.lrrr.language.utils.parseForLrrrValues
 import java.util.*
 
-val version = "0.0.1"
+val version = "0.0.2"
 
 val globalLrrr = Lrrr()
 
@@ -72,6 +72,7 @@ class Interpreter private constructor(val lrrr: Lrrr) {
 
     fun loadCode(code: String) {
         this.code = code
+        println(parseCodeStructures(code))
         println(parseCodeToEvaluatables(code))
     }
 

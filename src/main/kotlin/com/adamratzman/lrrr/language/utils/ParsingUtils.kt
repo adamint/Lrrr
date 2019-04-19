@@ -125,6 +125,7 @@ fun parseForLrrrValues(code: String): List<LrrrValue> {
     return values
 }
 
+
 fun String.splitIndices(indices: List<Int>) = toList().splitIndices(indices).map { it.joinToString("") }
 
 fun <T> List<T>.splitIndices(indicesTemp: List<Int>): List<List<T>> {
@@ -153,3 +154,6 @@ fun <T> List<T>.filterMapIndex(predicate: (Int, T) -> Boolean): MutableList<Int>
 fun String.splitByFilter(predicate: (Int, Char) -> Boolean) = splitIndices(filterMapIndex(predicate))
 
 fun <T> List<T>.splitByFilter(predicate: (Int, T) -> Boolean) = splitIndices(filterMapIndex(predicate))
+
+@Suppress("UNCHECKED_CAST")
+fun LrrrValue.toSequence():LrrrFiniteSequence<LrrrValue> = if (this is LrrrSequence<*>) this as LrrrFiniteSequence<LrrrValue> else LrrrFiniteSequence(mutableListOf(this))

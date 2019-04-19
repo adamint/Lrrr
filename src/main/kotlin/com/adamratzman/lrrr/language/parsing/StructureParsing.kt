@@ -96,7 +96,7 @@ open class ParseObj(val code: String) {
 
             val functionIndices =
                 workingCode.filterMapIndex { index, c ->
-                   ! isCharInString(index, stringLocations) && !isCharInCharDeclaration(index, workingCode)
+                    !isCharInString(index, stringLocations) && !isCharInCharDeclaration(index, workingCode)
                             && c.toString() in globalLrrr.functions.map { it.identifier }
                 }
 
@@ -109,20 +109,31 @@ open class ParseObj(val code: String) {
             val splitBetweenFunctions = workingCode
                 .splitIndices(functionIndices)
                 .mapIndexed { i, s ->
-                    s to try {
+                    val function = try {
                         globalLrrr.functions.find { it.identifier == workingCode[functionIndices[i]].toString() }!!
                     } catch (e: IndexOutOfBoundsException) {
                         ParamSplitFunction()
                     }
+
+                    if (functionIndices.getOrNull(i) == 0) function to s
+                    else s to function
                 }
                 .toMutableList()
 
-            globalLrrr.functions.find { it.identifier == workingCode.last().toString() }
-                ?.let { splitBetweenFunctions.add("" to it) }
+          /*  globalLrrr.functions.find { it.identifier == workingCode.last().toString() }
+                ?.let { splitBetweenFunctions.add(it to "") }
+          */
+            val allLrrrParams = splitBetweenFunctions.map { (first, second) ->
 
-            val allLrrrParams = splitBetweenFunctions.map { (before, function) ->
-                val parsed = mutableListOf<LrrrValue>(LrrrFiniteSequence(parseForLrrrValues(before).toMutableList()))
-                parsed.apply { if (function !is ParamSplitFunction) add(function) }
+                val parsed =
+                    mutableListOf<LrrrValue>(LrrrFiniteSequence(parseForLrrrValues(if (first is String) first else second as String).toMutableList()))
+                parsed.apply {
+                    val function = if (first is LrrrFunction) first else second as LrrrFunction
+                    if (function !is ParamSplitFunction) {
+                        if (first is LrrrFunction) add(0, function)
+                        else add(function)
+                    }
+                }
             }.flatten().toMutableList()
 
             loop@ while (allLrrrParams.any { it is LrrrFunction }) {
@@ -143,7 +154,7 @@ open class ParseObj(val code: String) {
                             continue@loop
                         }
 
-                        val arguments = allLrrrParams[functionIndex - 1]
+                        var arguments = allLrrrParams[functionIndex - 1]
                         // ?: throw IllegalArgumentException("${allLrrrParams[functionIndex - 1]} not a finite sequence")
                         // if (arguments.isEmpty()) throw IllegalArgumentException("Non-Nonadic Function invocation requires at least 1 argument ($function) ($workingCode) ($code)")
 
@@ -155,7 +166,7 @@ open class ParseObj(val code: String) {
                                 if (arguments is FunctionInvocation) {
                                     allLrrrParams[functionIndex] = FunctionInvocation(listOf(arguments), function)
                                 }
-                                arguments as LrrrFiniteSequence<LrrrValue>
+                                arguments = arguments.toSequence()
                                 if (arguments.list.size != 1) throw IllegalArgumentException("Nonadic function $function requires 1 arg. Given: $arguments ($workingCode)")
                                 allLrrrParams[functionIndex] = FunctionInvocation(arguments.list, function)
                                 allLrrrParams.removeAt(functionIndex - 1)
@@ -172,12 +183,12 @@ open class ParseObj(val code: String) {
                                 val argumentList = mutableListOf<LrrrValue>()
                                 val argumentIndicesToDelete = mutableListOf<Int>()
                                 for (i in (functionIndex - 1) downTo 0) {
-                                    val leftElement = allLrrrParams[i]
+                                    var leftElement = allLrrrParams[i]
                                     if (leftElement is FunctionInvocation) {
                                         argumentList.add(leftElement)
                                         argumentIndicesToDelete.add(i)
                                     } else {
-                                        leftElement as LrrrFiniteSequence<LrrrValue>
+                                        leftElement = leftElement.toSequence()
                                         val list = leftElement.list
                                         argumentList.add(list.removeAt(list.lastIndex))
                                         if (argumentList.size == 1 && list.isNotEmpty()) {
@@ -192,7 +203,7 @@ open class ParseObj(val code: String) {
 
                                 if (argumentList.size != 2) {
                                     if (functionIndex == allLrrrParams.lastIndex) throw IllegalArgumentException("No last diadic argument in $workingCode")
-                                    val nextArgument = allLrrrParams[functionIndex + 1]
+                                    var nextArgument = allLrrrParams[functionIndex + 1]
                                     if (nextArgument is NonadicFunction || nextArgument is FunctionInvocation) {
                                         if (nextArgument is NonadicFunction) argumentList.add(
                                             FunctionInvocation(
@@ -204,7 +215,7 @@ open class ParseObj(val code: String) {
                                         argumentIndicesToDelete.add(functionIndex + 1)
                                     } else if (nextArgument is LrrrFunction) throw IllegalArgumentException("Non-nonadic arg specified $workingCode")
                                     else {
-                                        nextArgument as LrrrFiniteSequence<LrrrValue>
+                                        nextArgument = nextArgument.toSequence()
                                         val list = nextArgument.list
                                         argumentList.add(list.removeAt(0))
                                         if (list.isEmpty()) argumentIndicesToDelete.add(functionIndex + 1)

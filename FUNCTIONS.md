@@ -1,16 +1,18 @@
 Function List:
 
 (no char): LrrrVariableResolverFunction [not usable in code]
-#: FirstGlobalElement
+\#: FirstGlobalElement
 %: Modulus
 +: Addition
 ,: ParamSplitFunction
 <: LessThan
->: GreaterThan
-P: Print
+\>: GreaterThan
+P: PrintFunction
+R: RangeFunction
 a: AddToSequence
 c: Clear
 g: GetFromSequenceByIndex
+l: SubsequenceFunction
 o: GetAllContextsValues
 r: RemoveFromSequence
 |: SecondGlobalElement

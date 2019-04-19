@@ -3,7 +3,7 @@ package com.adamratzman.lrrr.language.types
 import com.adamratzman.lrrr.language.evaluation.Evaluatable
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 
-data class LrrrVariable(var identifier: String?, var value: LrrrValue):LrrrValue() {
+data class LrrrVariable(var identifier: String?, var value: LrrrValue) : LrrrValue() {
     override fun evaluate(context: LrrrContext): LrrrValue = this
 
     val valueAsLrrrNumber get() = value as LrrrNumber
@@ -15,7 +15,8 @@ abstract class LrrrType : LrrrValue() {
     abstract fun identical(other: Any?): Boolean
 }
 
-class LrrrString(string: String) : LrrrFiniteSequence<Char>(string.toCharArray().toMutableList()) {
+class LrrrString(string: String) :
+    LrrrFiniteSequence<LrrrChar>(string.toCharArray().map { LrrrChar(it) }.toMutableList()) {
     override fun evaluate(context: LrrrContext) = this
 
     val string get() = list.joinToString("")
@@ -53,7 +54,7 @@ class LrrrNull private constructor() : LrrrVoid() {
     }
 }
 
-open class LrrrVoid internal constructor():LrrrType() {
+open class LrrrVoid internal constructor() : LrrrType() {
     override fun identical(other: Any?) = other is LrrrVoid
     override fun toString() = "void"
     override fun evaluate(context: LrrrContext) = this

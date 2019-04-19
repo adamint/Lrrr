@@ -1,5 +1,6 @@
 package com.adamratzman.lrrr.language.types
 
+import com.adamratzman.lrrr.language.evaluation.Evaluatable
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 
 abstract class LrrrSequence<T> : LrrrType() {
@@ -9,7 +10,7 @@ abstract class LrrrSequence<T> : LrrrType() {
     abstract fun get(index: Int): T
 }
 
-open class LrrrFiniteSequence<T>(var list: MutableList<T>) : LrrrSequence<T>() {
+open class LrrrFiniteSequence<T: Evaluatable>(var list: MutableList<T>) : LrrrSequence<T>() {
     override fun takeFirst(n: Int) = list.take(n)
     override fun take(start: Int, end: Int) = list.subList(start, end)
 

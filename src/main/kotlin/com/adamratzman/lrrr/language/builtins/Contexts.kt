@@ -61,3 +61,9 @@ class AddToGlobalContext : PolyadicFunction("ɠ", true) {
         return LrrrVoid.lrrrVoid
     }
 }
+
+class FirstParent : NonadicFunction("$",true) {
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
+        return context.parentContext?.firstValue?.value ?: LrrrNull.lrrrNull
+    }
+}
