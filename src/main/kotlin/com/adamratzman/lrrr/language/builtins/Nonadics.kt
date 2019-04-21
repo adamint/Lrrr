@@ -7,7 +7,7 @@ import com.adamratzman.lrrr.language.types.LrrrVoid
 import com.adamratzman.lrrr.language.types.NonadicFunction
 
 class ParamSplitFunction : NonadicFunction(",", true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
+    override fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue {
         return LrrrVoid.lrrrVoid
     }
 }

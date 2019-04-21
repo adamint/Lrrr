@@ -18,13 +18,23 @@ class NonadicSuspendedFunction(val arguments: List<List<LrrrValue>>):LrrrFunctio
 }*/
 
 abstract class NonadicFunction(identifier: String, shouldEvaluateParameters: Boolean) :
-    LrrrFunction(identifier, shouldEvaluateParameters)
+    LrrrFunction(identifier, shouldEvaluateParameters) {
+    abstract fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) = evaluate(context.parentContext?.backreference, context)
+
+}
 
 abstract class MonadicFunction(identifier: String, shouldEvaluateParameters: Boolean) :
-    LrrrFunction(identifier, shouldEvaluateParameters)
+    LrrrFunction(identifier, shouldEvaluateParameters) {
+    abstract fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) = evaluate(arguments[0], context)
+}
 
 abstract class DiadicFunction(identifier: String, shouldEvaluateParameters: Boolean, val strictRightArgument: Boolean) :
-    LrrrFunction(identifier, shouldEvaluateParameters)
+    LrrrFunction(identifier, shouldEvaluateParameters) {
+    abstract fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) = evaluate(arguments[0], arguments[1], context)
+}
 
 abstract class PolyadicFunction(identifier: String, shouldEvaluateParameters: Boolean) :
     LrrrFunction(identifier, shouldEvaluateParameters)

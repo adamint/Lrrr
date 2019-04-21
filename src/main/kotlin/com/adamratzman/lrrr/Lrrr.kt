@@ -6,6 +6,7 @@ import com.adamratzman.lrrr.language.evaluation.toEvaluatableObject
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.ParseObj
 import com.adamratzman.lrrr.language.parsing.parseStructures
+import com.adamratzman.lrrr.language.types.LrrrNoReturn
 import com.adamratzman.lrrr.language.types.LrrrNull
 import com.adamratzman.lrrr.language.types.LrrrVariable
 import com.adamratzman.lrrr.language.types.LrrrVoid
@@ -19,23 +20,24 @@ val globalLrrr = Lrrr()
 
 
 fun main(args: Array<String>) {
-    if (args.isNotEmpty() && args[0] == "run") {
-        val program = args.toList().subList(1, args.size).joinToString(" ").split("********")
-        val lrrr = Lrrr()
-        val interpreter = lrrr.createInterpreter()
-        interpreter.loadCode(program[0])
-        interpreter.loadContext(program.getOrElse(1) {""})
-        interpreter.loadVariableNames(program.getOrElse(2) {""})
+    if (args.isNotEmpty()) {
+        if (args[0] == "run") {
+            val program = args.toList().subList(1, args.size).joinToString(" ").split("********")
+            val lrrr = Lrrr()
+            val interpreter = lrrr.createInterpreter()
+            interpreter.loadCode(program[0])
+            interpreter.loadContext(program.getOrElse(1) { "" })
+            interpreter.loadVariableNames(program.getOrElse(2) { "" })
 
-        val result = interpreter.evaluate()
+            val result = interpreter.evaluate()
 
-        println(result)
+            if (result !is LrrrNoReturn) println(result)
+        } else if (args[0] == "functions") {
+            globalLrrr.functions.sortedBy { it.identifier.getOrNull(0)?.toInt() ?: 0 }
+                .joinToString("\n") { it.identifier + ": " + it::class.simpleName }
+                .let { println("Function List:\n$it") }
+        }
     } else {
-        /* globalLrrr.functions.sortedBy { it.identifier.getOrNull(0)?.toInt() ?: 0 }
-             .joinToString("\n") { it.identifier + ": " + it::class.simpleName }
-             .let { println("Function List:\n$it") }
-         */
-
         println(">>> Lrrr REPL (Version $version)")
 
         val lrrr = Lrrr()
@@ -68,7 +70,7 @@ class Lrrr {
 
         println("Evaluating...")
         val value = interpreter.evaluate()
-       if (value is LrrrNull || value!is LrrrVoid) println(value)
+        if (value is LrrrNull || value !is LrrrVoid) println(value)
     }
 }
 
@@ -89,6 +91,7 @@ class Interpreter private constructor(val lrrr: Lrrr) {
 
     fun loadCode(code: String) {
         this.code = code
+        println(parseCodeToEvaluatables(code))
     }
 
     fun parseCodeToEvaluatables(code: String): EvaluationScope =

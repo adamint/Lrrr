@@ -7,10 +7,7 @@ import com.adamratzman.lrrr.language.utils.mod
 
 @Suppress("UNCHECKED_CAST")
 class Addition : DiadicFunction("+", true, true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val first = arguments[0]
-        val second = arguments[1]
-
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         return when {
             first is LrrrNumber && second is LrrrNumber -> {
                 if (first is LrrrChar) LrrrChar((first + second).numberInteger.toChar())
@@ -38,10 +35,7 @@ class Addition : DiadicFunction("+", true, true) {
 }
 
 class Subtraction : DiadicFunction("⁻", true, true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val first = arguments[0]
-        val second = arguments[1]
-
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         return when {
             first is LrrrNumber && second is LrrrNumber -> {
                 if (first is LrrrChar) LrrrChar((first + second).numberInteger.toChar())
@@ -60,18 +54,18 @@ class Subtraction : DiadicFunction("⁻", true, true) {
 }
 
 class Division : DiadicFunction("÷", true, true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val first = arguments[0] as LrrrNumber
-        val second = arguments[1] as LrrrNumber
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        first as LrrrNumber
+        second as LrrrNumber
 
         return first / second
     }
 }
 
 class Modulus : DiadicFunction("%", true, true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val first = arguments[0] as LrrrNumber
-        val second = arguments[1] as LrrrNumber
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        first as LrrrNumber
+        second as LrrrNumber
 
         return mod(first.number, second.number).toLrrValue()
     }
@@ -79,25 +73,25 @@ class Modulus : DiadicFunction("%", true, true) {
 
 
 class GreaterThan : DiadicFunction(">", true, true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val first = arguments[0] as LrrrNumber
-        val second = arguments[1] as LrrrNumber
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        first as LrrrNumber
+        second as LrrrNumber
         return lrrrBooleanOf(first.number > second.number)
     }
 }
 
 class LessThan : DiadicFunction("<", true, true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val first = arguments[0] as LrrrNumber
-        val second = arguments[1] as LrrrNumber
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        first as LrrrNumber
+        second as LrrrNumber
         return lrrrBooleanOf(first.number < second.number)
     }
 }
 
 class Equals : DiadicFunction("=",true,true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val first = arguments[0] as LrrrType
-        val second = arguments[1] as LrrrType
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        first as LrrrType
+        second as LrrrType
         return first.identical(second).toLrrValue()
     }
 }

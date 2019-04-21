@@ -3,6 +3,8 @@
 Lrrr is a recreational golfing language designed to be easily
 customizable.
 
-Current pressing issues:
-- Basic mathematical functions have not yet been added (though this is trivial)
-- We need sequence generation functions, along with sequence manipulation functions added to the stlib
+## Todo:
+- Infinite sequence creation/manipulation functions
+- Filter/map/sort/reverse/other sequence manipulation functions
+- Allow functions to accept the evaluated value of other contexts as input:
+   e.g. 4+{7*6} should be acceptable and should return 4 + 42 = 46

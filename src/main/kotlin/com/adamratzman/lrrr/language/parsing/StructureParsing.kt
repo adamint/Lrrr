@@ -103,7 +103,7 @@ open class ParseObj(val code: String) {
             if (functionIndices.isEmpty()) {
                 lrrrValues.addAll(parseForLrrrValues(workingCode))
                 if (lrrrValues.size == 1) return lrrrValues.first()
-                return LrrrFiniteSequence(lrrrValues)
+                return GenericEvaluationScope(lrrrValues,StructureType.EMPTY,null)
             }
 
             val splitBetweenFunctions = workingCode

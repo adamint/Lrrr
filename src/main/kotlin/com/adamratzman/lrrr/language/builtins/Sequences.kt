@@ -6,11 +6,11 @@ import com.adamratzman.lrrr.language.parsing.toLrrValue
 import com.adamratzman.lrrr.language.types.*
 import com.adamratzman.lrrr.language.utils.splitIndices
 
-class Clear : NonadicFunction("c", true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val sequence = arguments[0] as LrrrFiniteSequence<*>
-        sequence.list.clear()
-        return LrrrVoid.lrrrVoid
+class Clear : MonadicFunction("c", true) {
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        argument as LrrrFiniteSequence<*>
+        argument.list.clear()
+        return argument
     }
 }
 
@@ -71,30 +71,35 @@ class SubsequenceFunction : PolyadicFunction("l", true) {
 }
 
 class RangeFunction : MonadicFunction("R", true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val number = (arguments.first() as LrrrNumber).numberInteger
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        argument as LrrrNumber
+        val number = argument.numberInteger
         return LrrrFiniteSequence((1..number).map { it.toLrrValue() }.toMutableList())
     }
 }
+
 class ExclusiveBoundsRange : MonadicFunction("B", true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val number = (arguments.first() as LrrrNumber).numberInteger
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        argument as LrrrNumber
+        val number = argument.numberInteger
         return LrrrFiniteSequence((2 until number).map { it.toLrrValue() }.toMutableList())
     }
 }
 
 
 class UntilFunction : MonadicFunction("U", true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val number = (arguments.first() as LrrrNumber).numberInteger
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        argument as LrrrNumber
+        val number = argument.numberInteger
         return LrrrFiniteSequence((0 until number).map { it.toLrrValue() }.toMutableList())
     }
 }
 
 @Suppress("UNCHECKED_CAST")
 class Sum : MonadicFunction("S", true) {
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
-        val list = (arguments[0] as LrrrFiniteSequence<LrrrValue>).list
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        argument as LrrrFiniteSequence<LrrrValue>
+        val list = argument.list
         return list.sumByDouble {
             when (it) {
                 is LrrrNumber -> it.number

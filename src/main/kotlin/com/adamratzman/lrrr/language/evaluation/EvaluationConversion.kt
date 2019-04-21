@@ -148,8 +148,7 @@ data class GenericEvaluationScope(
                 }
             }
             shouldEvaluate -> objects.map { inner -> inner.evaluate(context) }.let { result ->
-                if (context.parentContext == null) result.filter { it !is LrrrNoReturn }.lastOrNull()
-                    ?: LrrrVoid.lrrrVoid
+                if (context.parentContext == null) result.lastOrNull { it !is LrrrNoReturn } ?: LrrrVoid.lrrrVoid
                 else result.lastOrNull { it !is LrrrNoReturn } ?: LrrrVoid.lrrrVoid
             }
             else -> LrrrVoid.lrrrVoid
