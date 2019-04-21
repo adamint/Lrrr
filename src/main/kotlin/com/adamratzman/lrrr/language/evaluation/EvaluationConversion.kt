@@ -55,6 +55,7 @@ data class ForEvaluationScope(
                 }
             }
 
+            results.removeIf { it is LrrrNoReturn }
 
             return when {
                 results.isEmpty() -> LrrrVoid.lrrrVoid
@@ -97,12 +98,13 @@ data class ForEvaluationScope(
                 ) as LrrrNumber)
         }
 
+
+        results.removeIf { it is LrrrNoReturn }
+
         return when {
             results.isEmpty() -> LrrrVoid.lrrrVoid
             results.size == 1 -> results[0]
-            else -> LrrrFiniteSequence(
-                results.filter { it !is LrrrNoReturn }.toMutableList()
-            )
+            else -> LrrrFiniteSequence(results.toMutableList())
         }
     }
 
@@ -146,7 +148,8 @@ data class GenericEvaluationScope(
                 }
             }
             shouldEvaluate -> objects.map { inner -> inner.evaluate(context) }.let { result ->
-                if (context.parentContext == null) result.last()
+                if (context.parentContext == null) result.filter { it !is LrrrNoReturn }.lastOrNull()
+                    ?: LrrrVoid.lrrrVoid
                 else result.lastOrNull { it !is LrrrNoReturn } ?: LrrrVoid.lrrrVoid
             }
             else -> LrrrVoid.lrrrVoid
