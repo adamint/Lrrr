@@ -67,3 +67,9 @@ class FirstParent : NonadicFunction("$",true) {
         return context.parentContext?.firstValue?.value ?: LrrrNull.lrrrNull
     }
 }
+
+class GetBackreference : NonadicFunction("¡",true) {
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
+        return context.parentContext?.backreference ?: LrrrNull.lrrrNull
+    }
+}

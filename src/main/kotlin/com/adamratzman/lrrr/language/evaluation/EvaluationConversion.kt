@@ -36,7 +36,8 @@ data class ForEvaluationScope(
                     }
 
                     objects.map { inner -> inner.evaluate(forContext) }
-                        .let { result -> if (result.size == 1) result.first() else LrrrFiniteSequence(result.filter { it !is LrrrVoid }.toMutableList()) }
+                        .let { result -> if (result.size == 1) result.first() else LrrrFiniteSequence(result.filter { it !is LrrrNoReturn }.toMutableList()) }
+                        .apply { context.backreference = this }
                 })
             } else if (evaluatedValue is LrrrBoolean) {
                 if (evaluatedValue.boolean) {
@@ -47,7 +48,8 @@ data class ForEvaluationScope(
                             contextValues.add(LrrrVariable("j", (i + 1).toLrrValue()))
                         }
                         objects.map { inner -> inner.evaluate(forContext) }
-                            .let { result -> if (result.size == 1) result.first() else LrrrFiniteSequence(result.filter { it !is LrrrVoid }.toMutableList()) }
+                            .let { result -> if (result.size == 1) result.first() else LrrrFiniteSequence(result.filter { it !is LrrrNoReturn }.toMutableList()) }
+                            .apply { context.backreference = this }
                         i++
                     }
                 }
@@ -79,7 +81,7 @@ data class ForEvaluationScope(
         while (true) {
             val forContext = context.newChildContext.apply { contextValues.add(LrrrVariable("i", variable.value)) }
             val shouldContinue =
-                condition?.evaluate(forContext)?.let { if (it is LrrrBoolean) it.boolean else (it !is LrrrVoid && it !is LrrrNull) }
+                condition?.evaluate(forContext)?.let { if (it is LrrrBoolean) it.boolean else (it !is LrrrNoReturn && it !is LrrrNull) }
                     ?: true
 
             if (!shouldContinue) break
@@ -87,7 +89,7 @@ data class ForEvaluationScope(
             val result = objects.map { inner -> inner.evaluate(forContext) }
                 .let { if (it.size == 1) it.first() else LrrrFiniteSequence(it.toMutableList()) }
 
-            if (result !is LrrrVoid) results.add(result)
+            if (result !is LrrrNoReturn) results.add(result)
 
             variable.value =
                 (variable.value as LrrrNumber) + if (incrementorFunction == null) LrrrNumber(1.0) else (incrementorFunction.evaluate(
@@ -99,7 +101,7 @@ data class ForEvaluationScope(
             results.isEmpty() -> LrrrVoid.lrrrVoid
             results.size == 1 -> results[0]
             else -> LrrrFiniteSequence(
-                results.filter { it !is LrrrVoid }.toMutableList()
+                results.filter { it !is LrrrNoReturn }.toMutableList()
             )
         }
     }
@@ -132,7 +134,7 @@ data class GenericEvaluationScope(
 
         return when {
             type == StructureType.IF -> {
-                if (shouldEvaluate) objects.map { inner -> inner.evaluate(context) }.lastOrNull { it !is LrrrVoid }
+                if (shouldEvaluate) objects.map { inner -> inner.evaluate(context) }.lastOrNull { it !is LrrrNoReturn }
                     ?: LrrrVoid.lrrrVoid
                 else {
                     val foundElse = objects.filter { it is GenericEvaluationScope && it.type == StructureType.ELSE }
@@ -143,10 +145,10 @@ data class GenericEvaluationScope(
                     }
                 }
             }
-            shouldEvaluate -> objects.map { inner -> inner.evaluate(context) }.lastOrNull { it !is LrrrVoid }
+            shouldEvaluate -> objects.map { inner -> inner.evaluate(context) }.lastOrNull { it !is LrrrNoReturn }
                 ?: LrrrVoid.lrrrVoid
             else -> LrrrVoid.lrrrVoid
-        }
+        }.apply { context.parentContext?.backreference = this }
     }
 }
 

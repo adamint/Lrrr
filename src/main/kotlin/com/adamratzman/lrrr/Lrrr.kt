@@ -6,13 +6,14 @@ import com.adamratzman.lrrr.language.evaluation.toEvaluatableObject
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.ParseObj
 import com.adamratzman.lrrr.language.parsing.parseStructures
+import com.adamratzman.lrrr.language.types.LrrrNull
 import com.adamratzman.lrrr.language.types.LrrrVariable
 import com.adamratzman.lrrr.language.types.LrrrVoid
 import com.adamratzman.lrrr.language.utils.getAllFunctions
 import com.adamratzman.lrrr.language.utils.parseForLrrrValues
 import java.util.*
 
-val version = "0.0.2"
+val version = "1.0-SNAPSHOT"
 
 val globalLrrr = Lrrr()
 
@@ -67,7 +68,7 @@ class Lrrr {
 
         println("Evaluating...")
         val value = interpreter.evaluate()
-        if (value !is LrrrVoid) println(value)
+        if (value is LrrrNull || value!is LrrrVoid) println(value)
     }
 }
 

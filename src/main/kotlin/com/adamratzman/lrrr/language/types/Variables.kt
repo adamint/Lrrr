@@ -54,13 +54,15 @@ class LrrrNull private constructor() : LrrrVoid() {
     }
 }
 
-open class LrrrVoid internal constructor() : LrrrType() {
+class LrrrNoReturn : LrrrVoid()
+
+abstract class LrrrVoid : LrrrType() {
     override fun identical(other: Any?) = other is LrrrVoid
     override fun toString() = "void"
     override fun evaluate(context: LrrrContext) = this
 
     companion object {
-        val lrrrVoid = LrrrVoid()
+        val lrrrVoid = LrrrNoReturn()
     }
 }
 
