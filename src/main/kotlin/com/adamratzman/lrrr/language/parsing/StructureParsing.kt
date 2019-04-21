@@ -120,9 +120,11 @@ open class ParseObj(val code: String) {
                 }
                 .toMutableList()
 
-          /*  globalLrrr.functions.find { it.identifier == workingCode.last().toString() }
-                ?.let { splitBetweenFunctions.add(it to "") }
-          */
+            if (splitBetweenFunctions.size + 1 == functionIndices.size) {
+                globalLrrr.functions.find { it.identifier == workingCode.last().toString() }
+                    ?.let { splitBetweenFunctions.add(it to "") }
+            }
+
             val allLrrrParams = splitBetweenFunctions.map { (first, second) ->
 
                 val parsed =
@@ -135,6 +137,7 @@ open class ParseObj(val code: String) {
                     }
                 }
             }.flatten().toMutableList()
+
 
             loop@ while (allLrrrParams.any { it is LrrrFunction }) {
                 allLrrrParams.removeIf { it is LrrrFiniteSequence<*> && (it as LrrrFiniteSequence<LrrrValue>).list.isEmpty() }

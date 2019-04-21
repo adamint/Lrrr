@@ -16,17 +16,31 @@ val version = "0.0.2"
 
 val globalLrrr = Lrrr()
 
-fun main() {
-   /* globalLrrr.functions.sortedBy { it.identifier.getOrNull(0)?.toInt() ?: 0 }
-        .joinToString("\n") { it.identifier + ": " + it::class.simpleName }
-        .let { println("Function List:\n$it") }
-    */
 
-    println(">>> Lrrr REPL (Version $version)")
+fun main(args: Array<String>) {
+    if (args.isNotEmpty() && args[0] == "run") {
+        val program = args.toList().subList(1, args.size).joinToString(" ").split("********")
+        val lrrr = Lrrr()
+        val interpreter = lrrr.createInterpreter()
+        interpreter.loadCode(program[0])
+        if (program.size > 1) interpreter.loadContext(program[1])
+        if (program.size > 2) interpreter.loadVariableNames(program[2])
 
-    val lrrr = Lrrr()
-    while (true) {
-        lrrr.loadAndEvaluateProgram()
+        val result = interpreter.evaluate()
+
+        println(result)
+    } else {
+        /* globalLrrr.functions.sortedBy { it.identifier.getOrNull(0)?.toInt() ?: 0 }
+             .joinToString("\n") { it.identifier + ": " + it::class.simpleName }
+             .let { println("Function List:\n$it") }
+         */
+
+        println(">>> Lrrr REPL (Version $version)")
+
+        val lrrr = Lrrr()
+        while (true) {
+            lrrr.loadAndEvaluateProgram()
+        }
     }
 }
 
@@ -67,7 +81,9 @@ class Interpreter private constructor(val lrrr: Lrrr) {
     }
 
     fun loadVariableNames(variableNames: String) {
-        if (variableNames.isNotEmpty()) variableNames.split(",").forEachIndexed { i, s -> globalContext.contextValues[i].identifier = s }
+        if (variableNames.isNotEmpty()) variableNames.split(",").forEachIndexed { i, s ->
+            globalContext.contextValues[i].identifier = s
+        }
     }
 
     fun loadCode(code: String) {
