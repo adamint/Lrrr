@@ -68,7 +68,7 @@ class Lrrr {
 
         println("Evaluating...")
         val value = interpreter.evaluate()
-        if (value is LrrrNull || value!is LrrrVoid) println(value)
+       if (value is LrrrNull || value!is LrrrVoid) println(value)
     }
 }
 

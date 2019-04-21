@@ -145,8 +145,10 @@ data class GenericEvaluationScope(
                     }
                 }
             }
-            shouldEvaluate -> objects.map { inner -> inner.evaluate(context) }.lastOrNull { it !is LrrrNoReturn }
-                ?: LrrrVoid.lrrrVoid
+            shouldEvaluate -> objects.map { inner -> inner.evaluate(context) }.let { result ->
+                if (context.parentContext == null) result.last()
+                else result.lastOrNull { it !is LrrrNoReturn } ?: LrrrVoid.lrrrVoid
+            }
             else -> LrrrVoid.lrrrVoid
         }.apply { context.parentContext?.backreference = this }
     }
