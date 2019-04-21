@@ -24,8 +24,8 @@ fun main(args: Array<String>) {
         val lrrr = Lrrr()
         val interpreter = lrrr.createInterpreter()
         interpreter.loadCode(program[0])
-        if (program.size > 1) interpreter.loadContext(program[1])
-        if (program.size > 2) interpreter.loadVariableNames(program[2])
+        interpreter.loadContext(program.getOrElse(1) {""})
+        interpreter.loadVariableNames(program.getOrElse(2) {""})
 
         val result = interpreter.evaluate()
 
@@ -89,8 +89,6 @@ class Interpreter private constructor(val lrrr: Lrrr) {
 
     fun loadCode(code: String) {
         this.code = code
-        println(parseCodeStructures(code))
-        println(parseCodeToEvaluatables(code))
     }
 
     fun parseCodeToEvaluatables(code: String): EvaluationScope =
