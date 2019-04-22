@@ -20,7 +20,8 @@ class Addition : DiadicFunction("+", true, true) {
                 first as LrrrFiniteSequence<LrrrValue>
                 return if (second is LrrrFiniteSequence<*>) {
                     LrrrFiniteSequence((first.list + second.list).map { it.toLrrValue() }.toMutableList())
-                } else LrrrFiniteSequence((first.list + second).toMutableList())
+                } else if (second is LrrrVoid) first
+                else LrrrFiniteSequence((first.list + second).toMutableList())
             }
             first is LrrrBoolean -> {
                 return when (second) {

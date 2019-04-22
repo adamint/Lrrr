@@ -25,7 +25,6 @@ class GetGlobalContext : NonadicFunction("Ḃ", true) {
 
 class GetLastCurrentContextValue : NonadicFunction("ð", true) {
     override fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue {
-        println(context)
         return context.contextValues.lastOrNull()?.value ?: context.backreference
         ?: context.parentContext?.contextValues?.lastOrNull()?.value
         ?: context.parentContext?.backreference
@@ -74,6 +73,21 @@ class LastContextValue : NonadicFunction("¡", true) {
 
 class GetBackreference : NonadicFunction("$", true) {
     override fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue {
-        return backreference ?: LrrrNull.lrrrNull
+        return backreference
+        ?: context.parentContext?.contextValues?.lastOrNull()?.value
+        ?: context.parentContext?.backreference
+        ?: LrrrNull.lrrrNull
+    }
+}
+
+class GetParentParentContextLastValue : NonadicFunction("§",true) {
+    override fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue {
+        val parentParent = context.parentContext?.parentContext ?: return LrrrNull.lrrrNull
+        println(context)
+        return parentParent.backreference
+            ?: parentParent.parentContext?.contextValues?.lastOrNull()?.value
+            ?: parentParent.parentContext?.backreference
+            ?: parentParent.contextValues.lastOrNull()?.value
+            ?: LrrrNull.lrrrNull
     }
 }

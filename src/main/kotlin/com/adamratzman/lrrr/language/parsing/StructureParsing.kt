@@ -202,6 +202,8 @@ open class ParseObj(val code: String) {
                                     if (argumentList.size == 2) break
                                 }
 
+                                argumentList.reverse()
+
                                 if (argumentList.isEmpty()) throw IllegalArgumentException("There must be a diadic argument on the left in $workingCode")
 
                                 if (argumentList.size != 2) {

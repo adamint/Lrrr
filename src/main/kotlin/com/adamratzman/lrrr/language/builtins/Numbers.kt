@@ -47,16 +47,16 @@ class ConvertBase : PolyadicFunction("Ṿ", true) {
 }
 
 @Suppress("UNCHECKED_CAST")
-class Multiplication : DiadicFunction("*",true,true) {
+class Multiplication : DiadicFunction("*", true, true) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         second as LrrrNumber
         return when (first) {
             is LrrrNumber -> first * second
-            is LrrrString ->LrrrFiniteSequence( (1..second.numberInteger).map { first }.toMutableList())
+            is LrrrString -> LrrrFiniteSequence((1..second.numberInteger).map { first }.toMutableList())
             is LrrrFiniteSequence<*> -> {
                 first as LrrrFiniteSequence<LrrrValue>
                 (0..first.list.lastIndex).forEach { index ->
-                    first.list.set(index, evaluate(first.list[index],second, context))
+                    first.list.set(index, evaluate(first.list[index], second, context))
                 }
                 first
             }
@@ -65,9 +65,9 @@ class Multiplication : DiadicFunction("*",true,true) {
     }
 }
 
-class ToNumber : MonadicFunction("N",true) {
+class ToNumber : MonadicFunction("N", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
-        return when(argument) {
+        return when (argument) {
             is LrrrNumber -> argument.number
             is LrrrBoolean -> if (argument.boolean) 1.0 else 0.0
             is LrrrString -> argument.string.toDoubleOrNull()?.toLrrValue() ?: LrrrNull.lrrrNull
@@ -77,21 +77,18 @@ class ToNumber : MonadicFunction("N",true) {
     }
 }
 
-class Length : MonadicFunction("L",true) {
+class Length : MonadicFunction("L", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
-        return when(argument) {
-            is LrrrNumber -> argument.number
-            is LrrrBoolean -> if (argument.boolean) 1.0 else 0.0
-            is LrrrString -> argument.string.length.toDouble()
+        return when (argument) {
+            is LrrrVoid -> 0.0
             is LrrrFiniteSequence<*> -> argument.list.size.toDouble()
-            else -> 0.0
+            else -> 1.0
         }.toLrrValue()
     }
 }
 
 
-
-class ToChar : MonadicFunction("C",true) {
+class ToChar : MonadicFunction("C", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         return when (argument) {
             is LrrrNumber -> LrrrChar(argument.numberInteger.toChar())
@@ -111,7 +108,7 @@ class Subtraction : DiadicFunction("⁻", true, true) {
             first is LrrrBoolean -> {
                 return when (second) {
                     is LrrrBoolean -> first.boolean || second.boolean
-                    is LrrrNumber -> first.boolean ||( second.isInteger() && second.numberInteger == 1)
+                    is LrrrNumber -> first.boolean || (second.isInteger() && second.numberInteger == 1)
                     else -> second != LrrrNull.lrrrNull && second != LrrrVoid.lrrrVoid
                 }.toLrrValue()
             }
@@ -138,4 +135,9 @@ class Modulus : DiadicFunction("%", true, true) {
     }
 }
 
-
+class Inverse : MonadicFunction("Ȥ", true) {
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        argument as LrrrNumber
+        return (1.0 / argument.number).toLrrValue()
+    }
+}

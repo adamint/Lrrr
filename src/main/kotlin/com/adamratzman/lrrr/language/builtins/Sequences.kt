@@ -40,9 +40,11 @@ class GetFromSequenceByIndex : PolyadicFunction("g", true) {
         val indices = arguments.subList(0, arguments.lastIndex).map { it as LrrrNumber }.map { it.numberInteger }
 
         val result = indices.map { sequence.list[it] }
-        return if (result.isEmpty()) LrrrNull.lrrrNull
-        else if (result.size == 1) result.first()
-        else LrrrFiniteSequence(result.toMutableList())
+        return when {
+            result.isEmpty() -> LrrrNull.lrrrNull
+            result.size == 1 -> result.first()
+            else -> LrrrFiniteSequence(result.toMutableList())
+        }
     }
 }
 
@@ -110,5 +112,16 @@ class Sum : MonadicFunction("S", true) {
                 else -> 0.0
             }
         }.toLrrValue()
+    }
+}
+
+class Find : DiadicFunction("f", true, true) {
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        val string = first.toString()
+        val toFind = second.toString()
+
+        val foundStarts = toFind.toRegex().findAll(string).map { LrrrFiniteSequence(mutableListOf(it.range.first.toLrrValue(), it.range.last.toLrrValue()) )}.toMutableList()
+        return if (foundStarts.isEmpty()) LrrrNull.lrrrNull
+        else LrrrFiniteSequence(foundStarts)
     }
 }
