@@ -7,9 +7,8 @@ import com.adamratzman.lrrr.language.utils.VariableNotFoundException
 
 data class LrrrContext(val contextValues: MutableList<LrrrVariable>,
                        val parentContext: LrrrContext?,
-                       val lrrr: Lrrr) {
-
-    var backreference: LrrrValue? = null
+                       val lrrr: Lrrr,
+                       var backreference: LrrrValue? = null) {
 
     val firstValue get() = contextValues.first()
 

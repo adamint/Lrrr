@@ -64,9 +64,11 @@ class Lrrr {
         print(">>> ")
         interpreter.loadContext(scanner.nextLine())
 
-        println("Enter context variable names")
-        print(">>> ")
-        interpreter.loadVariableNames(scanner.nextLine())
+        if (interpreter.globalContext.contextValues.isNotEmpty()) {
+            println("Enter context variable names")
+            print(">>> ")
+            interpreter.loadVariableNames(scanner.nextLine())
+        }
 
         println("Evaluating...")
         val value = interpreter.evaluate()
@@ -91,7 +93,6 @@ class Interpreter private constructor(val lrrr: Lrrr) {
 
     fun loadCode(code: String) {
         this.code = code
-        println(parseCodeToEvaluatables(code))
     }
 
     fun parseCodeToEvaluatables(code: String): EvaluationScope =

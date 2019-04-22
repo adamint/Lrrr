@@ -34,44 +34,6 @@ class Addition : DiadicFunction("+", true, true) {
     }
 }
 
-class Subtraction : DiadicFunction("⁻", true, true) {
-    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
-        return when {
-            first is LrrrNumber && second is LrrrNumber -> {
-                if (first is LrrrChar) LrrrChar((first + second).numberInteger.toChar())
-                else first + second
-            }
-            first is LrrrBoolean -> {
-                return when (second) {
-                    is LrrrBoolean -> first.boolean || second.boolean
-                    is LrrrNumber -> first.boolean ||( second.isInteger() && second.numberInteger == 1)
-                    else -> second != LrrrNull.lrrrNull && second != LrrrVoid.lrrrVoid
-                }.toLrrValue()
-            }
-            else -> LrrrFiniteSequence(mutableListOf(first, second))
-        }
-    }
-}
-
-class Division : DiadicFunction("÷", true, true) {
-    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
-        first as LrrrNumber
-        second as LrrrNumber
-
-        return first / second
-    }
-}
-
-class Modulus : DiadicFunction("%", true, true) {
-    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
-        first as LrrrNumber
-        second as LrrrNumber
-
-        return mod(first.number, second.number).toLrrValue()
-    }
-}
-
-
 class GreaterThan : DiadicFunction(">", true, true) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         first as LrrrNumber

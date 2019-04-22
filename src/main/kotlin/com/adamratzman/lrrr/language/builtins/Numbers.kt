@@ -3,6 +3,7 @@ package com.adamratzman.lrrr.language.builtins
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.toLrrValue
 import com.adamratzman.lrrr.language.types.*
+import com.adamratzman.lrrr.language.utils.mod
 
 class ToBinary : MonadicFunction("b", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
@@ -69,12 +70,26 @@ class ToNumber : MonadicFunction("N",true) {
         return when(argument) {
             is LrrrNumber -> argument.number
             is LrrrBoolean -> if (argument.boolean) 1.0 else 0.0
+            is LrrrString -> argument.string.toDoubleOrNull()?.toLrrValue() ?: LrrrNull.lrrrNull
+            is LrrrFiniteSequence<*> -> argument.list.size.toDouble()
+            else -> 0.0
+        }.toLrrValue()
+    }
+}
+
+class Length : MonadicFunction("L",true) {
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        return when(argument) {
+            is LrrrNumber -> argument.number
+            is LrrrBoolean -> if (argument.boolean) 1.0 else 0.0
             is LrrrString -> argument.string.length.toDouble()
             is LrrrFiniteSequence<*> -> argument.list.size.toDouble()
             else -> 0.0
         }.toLrrValue()
     }
 }
+
+
 
 class ToChar : MonadicFunction("C",true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
@@ -85,3 +100,42 @@ class ToChar : MonadicFunction("C",true) {
         }
     }
 }
+
+class Subtraction : DiadicFunction("⁻", true, true) {
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        return when {
+            first is LrrrNumber && second is LrrrNumber -> {
+                if (first is LrrrChar) LrrrChar((first + second).numberInteger.toChar())
+                else first + second
+            }
+            first is LrrrBoolean -> {
+                return when (second) {
+                    is LrrrBoolean -> first.boolean || second.boolean
+                    is LrrrNumber -> first.boolean ||( second.isInteger() && second.numberInteger == 1)
+                    else -> second != LrrrNull.lrrrNull && second != LrrrVoid.lrrrVoid
+                }.toLrrValue()
+            }
+            else -> LrrrFiniteSequence(mutableListOf(first, second))
+        }
+    }
+}
+
+class Division : DiadicFunction("÷", true, true) {
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        first as LrrrNumber
+        second as LrrrNumber
+
+        return first / second
+    }
+}
+
+class Modulus : DiadicFunction("%", true, true) {
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        first as LrrrNumber
+        second as LrrrNumber
+
+        return mod(first.number, second.number).toLrrValue()
+    }
+}
+
+

@@ -20,4 +20,16 @@ class IsInteger : MonadicFunction("I",true) {
 }
 
 
-class Find()
+class Find : DiadicFunction("f",true,true) {
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        val string = (first as LrrrString).string
+        val toFind = second.toString()
+
+        val foundStarts = string.toRegex().findAll(toFind).map { it.range.first.toLrrValue() }.toMutableList()
+        return when {
+            foundStarts.isEmpty() -> LrrrNull.lrrrNull
+            foundStarts.size == 1 -> return foundStarts.first()
+            else -> return LrrrFiniteSequence(foundStarts)
+        }
+    }
+}
