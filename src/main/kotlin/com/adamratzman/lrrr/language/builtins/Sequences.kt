@@ -34,7 +34,30 @@ class RemoveFromSequence : PolyadicFunction("r", true) {
 }
 
 @Suppress("UNCHECKED_CAST")
-class GetFromSequenceByIndex : PolyadicFunction("g", true) {
+class GetOneFromSequenceByIndex : DiadicFunction("g", true,true) {
+    override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
+        val sequence = first as? LrrrSequence<LrrrValue> ?: second as LrrrSequence<LrrrValue>
+        val index = (first as? LrrrNumber ?: second as LrrrNumber).numberInteger
+
+        return sequence.get(index)
+    }
+
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
+        val sequence = arguments.last() as LrrrSequence<LrrrValue>
+        val indices = arguments.subList(0, arguments.lastIndex).map { it as LrrrNumber }.map { it.numberInteger }
+
+        val result = indices.map { sequence.get(it) }
+        return when {
+            result.isEmpty() -> LrrrNull.lrrrNull
+            result.size == 1 -> result.first()
+            else -> LrrrFiniteSequence(result.toMutableList())
+        }
+    }
+}
+
+
+@Suppress("UNCHECKED_CAST")
+class GetManyFromSequenceByIndex : PolyadicFunction("m", true) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         val sequence = arguments.last() as LrrrFiniteSequence<LrrrValue>
         val indices = arguments.subList(0, arguments.lastIndex).map { it as LrrrNumber }.map { it.numberInteger }

@@ -36,7 +36,7 @@ abstract class DiadicFunction(identifier: String, shouldEvaluateParameters: Bool
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) = evaluate(arguments[0], arguments[1], context)
 }
 
-abstract class PolyadicFunction(identifier: String, shouldEvaluateParameters: Boolean) :
+abstract class PolyadicFunction(identifier: String, shouldEvaluateParameters: Boolean, val unevaluatedParamIndices: List<Int> = listOf()) :
     LrrrFunction(identifier, shouldEvaluateParameters)
 
 data class FunctionInvocation(val parameters: List<Evaluatable>, val function: LrrrFunction) : LrrrValue() {
