@@ -1,9 +1,7 @@
 package com.adamratzman.lrrr.language.parsing
 
 import com.adamratzman.lrrr.globalLrrr
-import com.adamratzman.lrrr.language.builtins.GetAllCurrentContextValues
-import com.adamratzman.lrrr.language.builtins.GetLastCurrentContextValue
-import com.adamratzman.lrrr.language.builtins.ParamSplitFunction
+import com.adamratzman.lrrr.language.builtins.*
 import com.adamratzman.lrrr.language.evaluation.Evaluatable
 import com.adamratzman.lrrr.language.evaluation.ForEvaluationScope
 import com.adamratzman.lrrr.language.evaluation.GenericEvaluationScope
@@ -77,8 +75,171 @@ data class ParseContextSubsection(
         GenericEvaluationScope(children.map { it.toEvaluatable() }, StructureType.EMPTY, null)
 }
 
+@Suppress("UNCHECKED_CAST")
 open class ParseObj(val code: String) {
     override fun toString() = "ParseObj(code=$code)"
+
+    fun functionParse(workingCode: String, allLrrrParams: MutableList<LrrrValue>) {
+
+        loop@ while (allLrrrParams.any { it is LrrrFunction }) {
+            allLrrrParams.removeIf { it is LrrrFiniteSequence<*> && (it as LrrrFiniteSequence<LrrrValue>).list.isEmpty() }
+            val functionIndex = allLrrrParams.indexOfFirst { it is LrrrFunction }
+            val function = allLrrrParams[functionIndex] as LrrrFunction
+
+            when (function) {
+                is NonadicFunction -> allLrrrParams[functionIndex] = FunctionInvocation(listOf(), function)
+                else -> {
+                    if (functionIndex == 0) {
+                        if (function !is PolyadicFunction) {
+                            allLrrrParams.add(0, FunctionInvocation(listOf(), GetLastCurrentContextValue()))
+                        } else {
+                            allLrrrParams.add(0, FunctionInvocation(listOf(), GetAllCurrentContextValues()))
+                        }
+
+                        continue@loop
+                    }
+
+                    var arguments = allLrrrParams[functionIndex - 1]
+                    // ?: throw IllegalArgumentException("${allLrrrParams[functionIndex - 1]} not a finite sequence")
+                    // if (arguments.isEmpty()) throw IllegalArgumentException("Non-Nonadic Function invocation requires at least 1 argument ($function) ($workingCode) ($code)")
+
+                    when (function) {
+                        is NonadicFunction -> {
+                            allLrrrParams[functionIndex] = FunctionInvocation(listOf(), function)
+                        }
+                        is MonadicFunction -> {
+                            if (arguments is FunctionInvocation) {
+                                allLrrrParams[functionIndex] = FunctionInvocation(listOf(arguments), function)
+                            }
+                            arguments = arguments.toSequence()
+                            if (arguments.list.size > 1) throw IllegalArgumentException("Nonadic function $function requires 1 arg. Given: $arguments ($workingCode)")
+
+                            allLrrrParams[functionIndex] = FunctionInvocation(
+                                if (arguments.list.isNotEmpty()) arguments.list else listOf(GetBackreference()),
+                                function
+                            )
+                            allLrrrParams.removeAt(functionIndex - 1)
+                        }
+                        is PolyadicFunction -> {
+                            val previousArguments = allLrrrParams.subList(0, functionIndex)
+                                .map { if (it is LrrrFiniteSequence<*>) it.list as List<LrrrValue> else listOf(it) }
+                                .flatten()
+                            repeat((0..functionIndex).count()) { allLrrrParams.removeAt(0) }
+
+                            if (function !is TransformationFunction) {
+                                allLrrrParams.add(0, FunctionInvocation(previousArguments, function))
+                            } else {
+                                /*
+                                        while (lrrrValues.any { it is FunctionInvocation && it.function is TransformationFunction && it.transformer == null }) {
+            for (i in lrrrValues.lastIndex downTo 0) {
+                val param = lrrrValues[i]
+                if (param is FunctionInvocation && param.function is TransformationFunction && param.transformer == null) {
+                    if (i == lrrrValues.lastIndex) {
+                        param.transformer =
+                            listOf(FunctionInvocation(listOf("v".toLrrValue()), LrrrVariableResolverFunction()))
+                    } else {
+                        param.transformer = lrrrValues.subList(i + 1, lrrrValues.size)
+                        lrrrValues = lrrrValues.subList(0, i + 1)
+                    }
+
+                    break
+                }
+            }
+        }
+                                 */
+                                val after = allLrrrParams.toMutableList()
+
+                                while (after.any { it is TransformationFunction }) {
+                                    val index = (after.lastIndex downTo (functionIndex + 1)).first { i ->
+                                        after[i] is TransformationFunction
+                                    }
+
+                                    val transformer = if (index == after.lastIndex) listOf(
+                                        FunctionInvocation(
+                                            listOf("v".toLrrValue()),
+                                            LrrrVariableResolverFunction()
+                                        )
+                                    )
+                                    else {
+                                        after.subList(index + 1, after.size).toMutableList().apply {
+                                            after.removeRange((index + 1)..after.lastIndex)
+                                            functionParse("II $workingCode", this)
+                                        }
+                                    }
+
+                                    after[index] = FunctionInvocation(listOf(), function, transformer)
+                                }
+
+                                functionParse("INSIDE TRANSFORM OF $workingCode", after)
+
+                                allLrrrParams.removeRange(0..allLrrrParams.lastIndex)
+
+                                allLrrrParams.add(0, FunctionInvocation(previousArguments, function, after))
+
+
+                                return
+                            }
+                        }
+                        is DiadicFunction -> {
+                            // we're trying to find two arguments to apply to this function, first looking on the left, then on the right
+                            val argumentList = mutableListOf<LrrrValue>()
+                            val argumentIndicesToDelete = mutableListOf<Int>()
+                            for (i in (functionIndex - 1) downTo 0) {
+                                var leftElement = allLrrrParams[i]
+                                if (leftElement is FunctionInvocation) {
+                                    argumentList.add(leftElement)
+                                    argumentIndicesToDelete.add(i)
+                                } else {
+                                    leftElement = leftElement.toSequence()
+                                    val list = leftElement.list
+                                    argumentList.add(list.removeAt(list.lastIndex))
+                                    if (argumentList.size == 1 && list.isNotEmpty()) {
+                                        argumentList.add(list.removeAt(list.lastIndex))
+                                    }
+                                    if (list.isEmpty()) argumentIndicesToDelete.add(i)
+                                }
+                                if (argumentList.size == 2) break
+                            }
+
+                            argumentList.reverse()
+
+                            if (argumentList.isEmpty()) throw IllegalArgumentException("There must be a diadic argument on the left in $workingCode")
+
+                            if (argumentList.size != 2) {
+                                if (functionIndex == allLrrrParams.lastIndex) throw IllegalArgumentException("No last diadic argument in $workingCode")
+                                var nextArgument = allLrrrParams[functionIndex + 1]
+                                if (nextArgument is NonadicFunction || nextArgument is FunctionInvocation) {
+                                    if (nextArgument is NonadicFunction) argumentList.add(
+                                        FunctionInvocation(
+                                            listOf(),
+                                            nextArgument
+                                        )
+                                    )
+                                    else argumentList.add(nextArgument)
+                                    argumentIndicesToDelete.add(functionIndex + 1)
+                                } else if (nextArgument is LrrrFunction) throw IllegalArgumentException("Non-nonadic arg specified $workingCode")
+                                else {
+                                    nextArgument = nextArgument.toSequence()
+                                    val list = nextArgument.list
+                                    argumentList.add(list.removeAt(0))
+                                    if (list.isEmpty()) argumentIndicesToDelete.add(functionIndex + 1)
+                                }
+                            }
+
+                            if (argumentList.size != 2) throw IllegalArgumentException("Diadic function requires 2 arguments ($function)> Given: $arguments ($workingCode)")
+
+                            allLrrrParams[functionIndex] = FunctionInvocation(argumentList, function)
+
+                            if (argumentIndicesToDelete.isNotEmpty()) {
+                                allLrrrParams.removeAll(argumentIndicesToDelete.map { allLrrrParams[it] })
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+    }
 
     /**
     we have to worry about type parsing and function parameterizing here
@@ -87,164 +248,56 @@ open class ParseObj(val code: String) {
     open fun toEvaluatable(): Evaluatable {
         val lrrrValues = mutableListOf<LrrrValue>()
 
-        var workingCode = code
+        val workingCode = code.trim()
 
-        while (workingCode.isNotEmpty()) {
-            workingCode = workingCode.trim()
+        val stringLocations = findStringLocations(workingCode)
 
-            val stringLocations = findStringLocations(workingCode)
-
-            val functionIndices =
-                workingCode.filterMapIndex { index, c ->
-                    !isCharInString(index, stringLocations) && !isCharInCharDeclaration(index, workingCode)
-                            && c.toString() in globalLrrr.functions.map { it.identifier }
-                }
-
-            if (functionIndices.isEmpty()) {
-                lrrrValues.addAll(parseForLrrrValues(workingCode))
-                if (lrrrValues.size == 1) return lrrrValues.first()
-                return GenericEvaluationScope(lrrrValues,StructureType.EMPTY,null)
+        val functionIndices =
+            workingCode.filterMapIndex { index, c ->
+                !isCharInString(index, stringLocations) && !isCharInCharDeclaration(index, workingCode)
+                        && c.toString() in globalLrrr.functions.map { it.identifier }
             }
 
-            val splitBetweenFunctions = workingCode
-                .splitIndices(functionIndices)
-                .mapIndexed { i, s ->
-                    val function = try {
-                        globalLrrr.functions.find { it.identifier == workingCode[functionIndices[i]].toString() }!!
-                    } catch (e: IndexOutOfBoundsException) {
-                        ParamSplitFunction()
-                    }
-
-                    if (functionIndices.getOrNull(i) == 0) function to s
-                    else s to function
-                }
-                .toMutableList()
-
-            if (splitBetweenFunctions.size + 1 == functionIndices.size) {
-                globalLrrr.functions.find { it.identifier == workingCode.last().toString() }
-                    ?.let { splitBetweenFunctions.add(it to "") }
-            }
-
-            val allLrrrParams = splitBetweenFunctions.map { (first, second) ->
-
-                val parsed =
-                    mutableListOf<LrrrValue>(LrrrFiniteSequence(parseForLrrrValues(if (first is String) first else second as String).toMutableList()))
-                parsed.apply {
-                    val function = if (first is LrrrFunction) first else second as LrrrFunction
-                    if (function !is ParamSplitFunction) {
-                        if (first is LrrrFunction) add(0, function)
-                        else add(function)
-                    }
-                }
-            }.flatten().toMutableList()
-
-
-            loop@ while (allLrrrParams.any { it is LrrrFunction }) {
-                allLrrrParams.removeIf { it is LrrrFiniteSequence<*> && (it as LrrrFiniteSequence<LrrrValue>).list.isEmpty() }
-                val functionIndex = allLrrrParams.indexOfFirst { it is LrrrFunction }
-                val function = allLrrrParams[functionIndex] as LrrrFunction
-
-                when (function) {
-                    is NonadicFunction -> allLrrrParams[functionIndex] = FunctionInvocation(listOf(), function)
-                    else -> {
-                        if (functionIndex == 0) {
-                            if (function !is PolyadicFunction) {
-                                allLrrrParams.add(0, FunctionInvocation(listOf(), GetLastCurrentContextValue()))
-                            } else {
-                                allLrrrParams.add(0, FunctionInvocation(listOf(), GetAllCurrentContextValues()))
-                            }
-
-                            continue@loop
-                        }
-
-                        var arguments = allLrrrParams[functionIndex - 1]
-                        // ?: throw IllegalArgumentException("${allLrrrParams[functionIndex - 1]} not a finite sequence")
-                        // if (arguments.isEmpty()) throw IllegalArgumentException("Non-Nonadic Function invocation requires at least 1 argument ($function) ($workingCode) ($code)")
-
-                        when (function) {
-                            is NonadicFunction -> {
-                                allLrrrParams[functionIndex] = FunctionInvocation(listOf(), function)
-                            }
-                            is MonadicFunction -> {
-                                if (arguments is FunctionInvocation) {
-                                    allLrrrParams[functionIndex] = FunctionInvocation(listOf(arguments), function)
-                                }
-                                arguments = arguments.toSequence()
-                                if (arguments.list.size != 1) throw IllegalArgumentException("Nonadic function $function requires 1 arg. Given: $arguments ($workingCode)")
-                                allLrrrParams[functionIndex] = FunctionInvocation(arguments.list, function)
-                                allLrrrParams.removeAt(functionIndex - 1)
-                            }
-                            is PolyadicFunction -> {
-                                val previousArguments = allLrrrParams.subList(0, functionIndex)
-                                    .map { if (it is LrrrFiniteSequence<*>) it.list as List<LrrrValue> else listOf(it) }
-                                    .flatten()
-                                repeat((0..functionIndex).count()) { allLrrrParams.removeAt(0) }
-                                allLrrrParams.add(0, FunctionInvocation(previousArguments, function))
-                            }
-                            is DiadicFunction -> {
-                                // we're trying to find two arguments to apply to this function, first looking on the left, then on the right
-                                val argumentList = mutableListOf<LrrrValue>()
-                                val argumentIndicesToDelete = mutableListOf<Int>()
-                                for (i in (functionIndex - 1) downTo 0) {
-                                    var leftElement = allLrrrParams[i]
-                                    if (leftElement is FunctionInvocation) {
-                                        argumentList.add(leftElement)
-                                        argumentIndicesToDelete.add(i)
-                                    } else {
-                                        leftElement = leftElement.toSequence()
-                                        val list = leftElement.list
-                                        argumentList.add(list.removeAt(list.lastIndex))
-                                        if (argumentList.size == 1 && list.isNotEmpty()) {
-                                            argumentList.add(list.removeAt(list.lastIndex))
-                                        }
-                                        if (list.isEmpty()) argumentIndicesToDelete.add(i)
-                                    }
-                                    if (argumentList.size == 2) break
-                                }
-
-                                argumentList.reverse()
-
-                                if (argumentList.isEmpty()) throw IllegalArgumentException("There must be a diadic argument on the left in $workingCode")
-
-                                if (argumentList.size != 2) {
-                                    if (functionIndex == allLrrrParams.lastIndex) throw IllegalArgumentException("No last diadic argument in $workingCode")
-                                    var nextArgument = allLrrrParams[functionIndex + 1]
-                                    if (nextArgument is NonadicFunction || nextArgument is FunctionInvocation) {
-                                        if (nextArgument is NonadicFunction) argumentList.add(
-                                            FunctionInvocation(
-                                                listOf(),
-                                                nextArgument
-                                            )
-                                        )
-                                        else argumentList.add(nextArgument)
-                                        argumentIndicesToDelete.add(functionIndex + 1)
-                                    } else if (nextArgument is LrrrFunction) throw IllegalArgumentException("Non-nonadic arg specified $workingCode")
-                                    else {
-                                        nextArgument = nextArgument.toSequence()
-                                        val list = nextArgument.list
-                                        argumentList.add(list.removeAt(0))
-                                        if (list.isEmpty()) argumentIndicesToDelete.add(functionIndex + 1)
-                                    }
-                                }
-
-                                if (argumentList.size != 2) throw IllegalArgumentException("Diadic function requires 2 arguments ($function)> Given: $arguments ($workingCode)")
-
-                                allLrrrParams[functionIndex] = FunctionInvocation(argumentList, function)
-
-                                if (argumentIndicesToDelete.isNotEmpty()) {
-                                    allLrrrParams.removeAll(argumentIndicesToDelete.map { allLrrrParams[it] })
-                                }
-                            }
-                        }
-
-                    }
-                }
-            }
-
-            lrrrValues.addAll(allLrrrParams)
-            break
-
+        if (functionIndices.isEmpty()) {
+            lrrrValues.addAll(parseForLrrrValues(workingCode))
+            if (lrrrValues.size == 1) return lrrrValues.first()
+            return GenericEvaluationScope(lrrrValues, StructureType.EMPTY, null)
         }
+
+        val splitBetweenFunctions = workingCode
+            .splitIndices(functionIndices)
+            .mapIndexed { i, s ->
+                val function = try {
+                    globalLrrr.functions.find { it.identifier == workingCode[functionIndices[i]].toString() }!!
+                } catch (e: IndexOutOfBoundsException) {
+                    ParamSplitFunction()
+                }
+
+                if (functionIndices.getOrNull(i) == 0) function to s
+                else s to function
+            }
+            .toMutableList()
+
+        if (splitBetweenFunctions.size + 1 == functionIndices.size) {
+            globalLrrr.functions.find { it.identifier == workingCode.last().toString() }
+                ?.let { splitBetweenFunctions.add(it to "") }
+        }
+
+        val allLrrrParams = splitBetweenFunctions.map { (first, second) ->
+            val parsed =
+                mutableListOf<LrrrValue>(LrrrFiniteSequence(parseForLrrrValues(if (first is String) first else second as String).toMutableList()))
+            parsed.apply {
+                val function = if (first is LrrrFunction) first else second as LrrrFunction
+                if (function !is ParamSplitFunction) {
+                    if (first is LrrrFunction) add(0, function)
+                    else add(function)
+                }
+            }
+        }.flatten().toMutableList()
+
+        functionParse(workingCode, allLrrrParams)
+
+        lrrrValues.addAll(allLrrrParams)
 
 
         return GenericEvaluationScope(lrrrValues, StructureType.EMPTY, null)
@@ -266,9 +319,13 @@ fun parseStructures(_program: String): List<ParseObj> {
     replacables.forEach { replacableFunction ->
         var i = 0
         while (i <= program.length - replacableFunction.identifier.length) {
-            if (replacableFunction.identifier == program.substring(i,i+replacableFunction.identifier.length)
-                && !isCharInCharDeclaration(i,program) && !isCharInString(i,stringLocations))  {
-                program = program.substring(0, i) + replacableFunction.replaceWith + program.substring(i + replacableFunction.identifier.length)
+            if (replacableFunction.identifier == program.substring(i, i + replacableFunction.identifier.length)
+                && !isCharInCharDeclaration(i, program) && !isCharInString(i, stringLocations)
+            ) {
+                program = program.substring(
+                    0,
+                    i
+                ) + replacableFunction.replaceWith + program.substring(i + replacableFunction.identifier.length)
                 stringLocations = findStringLocations(program)
                 i = 0
             } else i++

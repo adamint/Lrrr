@@ -19,7 +19,7 @@ class AddToSequence : PolyadicFunction("a", true) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         val sequence = arguments.last() as LrrrFiniteSequence<Evaluatable>
         sequence.list.addAll(arguments)
-        return LrrrVoid.lrrrVoid
+        return sequence
     }
 }
 
@@ -29,7 +29,7 @@ class RemoveFromSequence : PolyadicFunction("r", true) {
         val sequence = arguments.last() as LrrrFiniteSequence<LrrrValue>
         val indices = arguments.filter { it is LrrrNumber }.map { (it as LrrrNumber).numberInteger }
         sequence.list = sequence.list.splitIndices(indices).flatten().toMutableList()
-        return LrrrVoid.lrrrVoid
+        return sequence
     }
 }
 
@@ -138,6 +138,16 @@ class Sum : MonadicFunction("S", true) {
     }
 }
 
+@Suppress("UNCHECKED_CAST")
+class Product : MonadicFunction("p",true) {
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        argument as LrrrFiniteSequence<LrrrValue>
+        var product = 1.0
+        argument.list.map { (it as LrrrNumber).number }.forEach { product *= it }
+        return product.toLrrValue()
+    }
+}
+
 class Find : DiadicFunction("f", true, true) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         val string = first.toString()
@@ -146,5 +156,17 @@ class Find : DiadicFunction("f", true, true) {
         val foundStarts = toFind.toRegex().findAll(string).map { LrrrFiniteSequence(mutableListOf(it.range.first.toLrrValue(), it.range.last.toLrrValue()) )}.toMutableList()
         return if (foundStarts.isEmpty()) LrrrNull.lrrrNull
         else LrrrFiniteSequence(foundStarts)
+    }
+}
+
+class CreateFiniteSequence : PolyadicFunction("s",true) {
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
+        return LrrrFiniteSequence(arguments.toMutableList())
+    }
+}
+
+class CreateInfiniteSequence : PolyadicFunction("I",true,listOf(0)) {
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

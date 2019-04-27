@@ -60,6 +60,9 @@ class Lrrr {
         print(">>> ")
         interpreter.loadCode(scanner.nextLine())
 
+        println(interpreter.parseCodeStructures(interpreter.code))
+        println(interpreter.parseCodeToEvaluatables(interpreter.code))
+
         println("Enter context code")
         print(">>> ")
         interpreter.loadContext(scanner.nextLine())
@@ -92,7 +95,7 @@ class Interpreter private constructor(val lrrr: Lrrr) {
     }
 
     fun loadCode(code: String) {
-        this.code = code
+        this.code = code.trim()
     }
 
     fun parseCodeToEvaluatables(code: String): EvaluationScope =

@@ -151,7 +151,14 @@ data class GenericEvaluationScope(
                 val childContext = if (objects.size == 1) context else context.newChildContext
                 inner.evaluate(childContext).apply { childContext.parentContext?.backreference = this }
             }.let { result ->
-                if (context.parentContext == null) result.lastOrNull { it !is LrrrNoReturn } ?: LrrrVoid.lrrrVoid
+                if (context.parentContext == null) {
+                    val filtered = result.filter { it !is LrrrNoReturn }
+                    when {
+                        filtered.isEmpty() -> LrrrVoid.lrrrVoid
+                        filtered.size == 1 -> filtered[0]
+                        else -> LrrrFiniteSequence(filtered.toMutableList())
+                    }
+                }
                 else result.lastOrNull { it !is LrrrNoReturn } ?: LrrrVoid.lrrrVoid
             }
             else -> LrrrVoid.lrrrVoid

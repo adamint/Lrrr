@@ -157,3 +157,8 @@ fun <T> List<T>.splitByFilter(predicate: (Int, T) -> Boolean) = splitIndices(fil
 
 @Suppress("UNCHECKED_CAST")
 fun LrrrValue.toSequence():LrrrFiniteSequence<LrrrValue> = if (this is LrrrSequence<*>) this as LrrrFiniteSequence<LrrrValue> else LrrrFiniteSequence(mutableListOf(this))
+
+fun <T> MutableList<T>.removeRange(intRange: IntRange): MutableList<T> {
+    repeat(intRange.last - intRange.first + 1) { removeAt(intRange.first) }
+    return this
+}

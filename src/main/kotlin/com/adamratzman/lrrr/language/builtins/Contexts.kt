@@ -25,10 +25,13 @@ class GetGlobalContext : NonadicFunction("Ḃ", true) {
 
 class GetLastCurrentContextValue : NonadicFunction("ð", true) {
     override fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue {
-        return context.contextValues.lastOrNull()?.value ?: context.backreference
-        ?: context.parentContext?.contextValues?.lastOrNull()?.value
-        ?: context.parentContext?.backreference
-        ?: throw IllegalStateException()
+        return context.contextValues.find { it.identifier == "v" }?.value
+            ?: context.contextValues.find { it.identifier == "i" }?.value ?:
+        context.contextValues.lastOrNull()?.value
+            ?: context.backreference
+            ?: context.parentContext?.contextValues?.lastOrNull()?.value
+            ?: context.parentContext?.backreference
+            ?: throw IllegalStateException()
     }
 }
 
@@ -67,20 +70,20 @@ class AddToGlobalContext : PolyadicFunction("ɠ", true) {
 
 class LastContextValue : NonadicFunction("¡", true) {
     override fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue {
-        return context.contextValues.lastOrNull () ?: LrrrNull.lrrrNull
+        return context.contextValues.lastOrNull() ?: LrrrNull.lrrrNull
     }
 }
 
 class GetBackreference : NonadicFunction("$", true) {
     override fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue {
         return backreference
-        ?: context.parentContext?.contextValues?.lastOrNull()?.value
-        ?: context.parentContext?.backreference
-        ?: LrrrNull.lrrrNull
+            ?: context.parentContext?.contextValues?.lastOrNull()?.value
+            ?: context.parentContext?.backreference
+            ?: LrrrNull.lrrrNull
     }
 }
 
-class GetParentParentContextLastValue : NonadicFunction("§",true) {
+class GetParentParentContextLastValue : NonadicFunction("§", true) {
     override fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue {
         val parentParent = context.parentContext?.parentContext ?: return LrrrNull.lrrrNull
         println(context)
