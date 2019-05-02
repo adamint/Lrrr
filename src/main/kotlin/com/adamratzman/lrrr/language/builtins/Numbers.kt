@@ -1,15 +1,17 @@
 package com.adamratzman.lrrr.language.builtins
 
 import com.adamratzman.lrrr.language.parsing.LrrrContext
-import com.adamratzman.lrrr.language.parsing.toLrrValue
+import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
+import com.adamratzman.lrrr.language.utils.gamma
 import com.adamratzman.lrrr.language.utils.mod
+import kotlin.math.sqrt
 
 class ToBinary : MonadicFunction("b", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         return when (argument) {
-            is LrrrNumber -> argument.numberInteger.toString(2).toLrrValue()
-            is LrrrString -> argument.string.toInt().toString(2).toLrrValue()
+            is LrrrNumber -> argument.numberInteger.toString(2).toLrrrValue()
+            is LrrrString -> argument.string.toInt().toString(2).toLrrrValue()
             else -> throw IllegalArgumentException()
         }
     }
@@ -18,7 +20,7 @@ class ToBinary : MonadicFunction("b", true) {
 class FromBinary : MonadicFunction("Ɓ", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrString
-        return argument.string.toInt(2).toLrrValue()
+        return argument.string.toInt(2).toLrrrValue()
     }
 }
 
@@ -27,7 +29,7 @@ class ToBaseTen : DiadicFunction("Ṭ", true, true) {
         first as LrrrString
         second as LrrrNumber
 
-        return first.string.toInt(second.numberInteger).toLrrValue()
+        return first.string.toInt(second.numberInteger).toLrrrValue()
     }
 }
 
@@ -36,13 +38,13 @@ class ConvertBase : PolyadicFunction("Ṿ", true) {
         val number = arguments[0]
         if (number is LrrrNumber) {
             val base = arguments[1] as LrrrNumber
-            return if (base.numberInteger == 10 - 1) number else number.numberInteger.toString(base.numberInteger + 1).toLrrValue()
+            return if (base.numberInteger == 10 - 1) number else number.numberInteger.toString(base.numberInteger + 1).toLrrrValue()
         }
         number as LrrrString
         val baseFrom = arguments[1] as LrrrNumber
         val convertedNumber = number.string.toInt(baseFrom.numberInteger)
         val baseTo = arguments[2] as LrrrNumber
-        return if (baseTo.numberInteger == 10 - 1) convertedNumber.toLrrValue() else convertedNumber.toString(baseTo.numberInteger).toLrrValue()
+        return if (baseTo.numberInteger == 10 - 1) convertedNumber.toLrrrValue() else convertedNumber.toString(baseTo.numberInteger).toLrrrValue()
     }
 }
 
@@ -70,10 +72,10 @@ class ToNumber : MonadicFunction("N", true) {
         return when (argument) {
             is LrrrNumber -> argument.number
             is LrrrBoolean -> if (argument.boolean) 1.0 else 0.0
-            is LrrrString -> argument.string.toDoubleOrNull()?.toLrrValue() ?: LrrrNull.lrrrNull
+            is LrrrString -> argument.string.toDoubleOrNull()?.toLrrrValue() ?: LrrrNull.lrrrNull
             is LrrrFiniteSequence<*> -> argument.list.size.toDouble()
             else -> 0.0
-        }.toLrrValue()
+        }.toLrrrValue()
     }
 }
 
@@ -83,7 +85,7 @@ class Length : MonadicFunction("L", true) {
             is LrrrVoid -> 0.0
             is LrrrFiniteSequence<*> -> argument.list.size.toDouble()
             else -> 1.0
-        }.toLrrValue()
+        }.toLrrrValue()
     }
 }
 
@@ -110,7 +112,7 @@ class Subtraction : DiadicFunction("⁻", true, true) {
                     is LrrrBoolean -> first.boolean || second.boolean
                     is LrrrNumber -> first.boolean || (second.isInteger() && second.numberInteger == 1)
                     else -> second != LrrrNull.lrrrNull && second != LrrrVoid.lrrrVoid
-                }.toLrrValue()
+                }.toLrrrValue()
             }
             else -> LrrrFiniteSequence(mutableListOf(first, second))
         }
@@ -131,13 +133,30 @@ class Modulus : DiadicFunction("%", true, true) {
         first as LrrrNumber
         second as LrrrNumber
 
-        return mod(first.number, second.number).toLrrValue()
+        return mod(first.number, second.number).toLrrrValue()
     }
 }
 
 class Inverse : MonadicFunction("Ȥ", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
-        return (1.0 / argument.number).toLrrValue()
+        return (1.0 / argument.number).toLrrrValue()
     }
 }
+
+class IsPrime : MonadicFunction("G",true) {
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        argument as LrrrNumber
+        val number = argument.numberInteger
+        return (number != 1 && (2..number).count { number % it == 0 } == 1).toLrrrValue()
+    }
+
+}
+
+class Factorial : MonadicFunction("!",true) {
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        argument as LrrrNumber
+        return gamma(argument.number).toLrrrValue()
+    }
+}
+

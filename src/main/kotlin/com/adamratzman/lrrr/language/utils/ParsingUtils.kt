@@ -5,7 +5,7 @@ import com.adamratzman.lrrr.language.builtins.LrrrVariableResolverFunction
 import com.adamratzman.lrrr.language.parsing.convertToNumber
 import com.adamratzman.lrrr.language.parsing.findNextUnescapedStringCharacter
 import com.adamratzman.lrrr.language.parsing.isCharInString
-import com.adamratzman.lrrr.language.parsing.toLrrValue
+import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
 
 open class LrrrException(message: String?) : Exception(message)
@@ -69,7 +69,7 @@ fun parseForLrrrValues(code: String): List<LrrrValue> {
     while (workingCode.isNotEmpty()) {
         when {
             workingCode[0] == 't' || workingCode[0] == 'f' -> {
-                values.add((workingCode[0] == 't').toLrrValue())
+                values.add((workingCode[0] == 't').toLrrrValue())
                 workingCode = workingCode.substring(1)
             }
             workingCode.startsWith("null") -> {
@@ -81,22 +81,22 @@ fun parseForLrrrValues(code: String): List<LrrrValue> {
                 workingCode = workingCode.substring(4)
             }
             workingCode.startsWith("'") -> workingCode = if (workingCode.length == 1) {
-                values.add('\u0000'.toLrrValue())
+                values.add('\u0000'.toLrrrValue())
                 ""
             } else {
-                values.add(workingCode[1].toLrrValue())
+                values.add(workingCode[1].toLrrrValue())
                 if (workingCode.length == 2 || workingCode[2] != '\'') workingCode.substring(2)
                 else workingCode.substring(3)
             }
             workingCode.startsWith("\"") -> {
                 val endIndex = findNextUnescapedStringCharacter(workingCode.substring(1))?.plus(1)
                 workingCode = if (endIndex == null) {
-                    values.add(workingCode.substring(1).toLrrValue())
+                    values.add(workingCode.substring(1).toLrrrValue())
                     ""
                 } else {
                     values.add(
                         workingCode.substring(1, endIndex)
-                            .replace("\\\"", "\"").toLrrValue()
+                            .replace("\\\"", "\"").toLrrrValue()
                     )
                     if (endIndex < workingCode.lastIndex) workingCode.substring(endIndex + 1)
                     else ""
@@ -108,7 +108,7 @@ fun parseForLrrrValues(code: String): List<LrrrValue> {
                         workingCode.takeWhile { it in '0'..'9' || it in 'A'..'F' || it == '.' || it == '-' }
                     val decimal = decimalString.convertToNumber()
                         ?: throw IllegalStateException("Unknown state $decimalString in $workingCode ($code)")
-                    values.add(decimal.toLrrValue())
+                    values.add(decimal.toLrrrValue())
                     workingCode.substring(decimalString.length)
                 } catch (e: IllegalStateException) {
                     values.add(

@@ -1,7 +1,7 @@
 package com.adamratzman.lrrr.language.builtins
 
 import com.adamratzman.lrrr.language.parsing.LrrrContext
-import com.adamratzman.lrrr.language.parsing.toLrrValue
+import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
 
 class PrintFunction : PolyadicFunction("P", true) {
@@ -10,7 +10,7 @@ class PrintFunction : PolyadicFunction("P", true) {
         if (toPrint.isNotEmpty()) {
             println(
                 if (toPrint.size == 1) toPrint[0]
-                else LrrrFiniteSequence(toPrint.map { it.toLrrValue() }.toMutableList())
+                else LrrrFiniteSequence(toPrint.map { it.toLrrrValue() }.toMutableList())
             )
         }
         return LrrrVoid.lrrrVoid

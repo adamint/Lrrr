@@ -2,7 +2,7 @@ package com.adamratzman.lrrr.language.builtins
 
 import com.adamratzman.lrrr.language.evaluation.Evaluatable
 import com.adamratzman.lrrr.language.parsing.LrrrContext
-import com.adamratzman.lrrr.language.parsing.toLrrValue
+import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
 import com.adamratzman.lrrr.language.utils.splitIndices
 
@@ -99,7 +99,7 @@ class RangeFunction : MonadicFunction("R", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
         val number = argument.numberInteger
-        return LrrrFiniteSequence((1..number).map { it.toLrrValue() }.toMutableList())
+        return LrrrFiniteSequence((1..number).map { it.toLrrrValue() }.toMutableList())
     }
 }
 
@@ -107,7 +107,7 @@ class ExclusiveBoundsRange : MonadicFunction("B", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
         val number = argument.numberInteger
-        return LrrrFiniteSequence((2 until number).map { it.toLrrValue() }.toMutableList())
+        return LrrrFiniteSequence((2 until number).map { it.toLrrrValue() }.toMutableList())
     }
 }
 
@@ -116,7 +116,7 @@ class UntilFunction : MonadicFunction("U", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
         val number = argument.numberInteger
-        return LrrrFiniteSequence((0 until number).map { it.toLrrValue() }.toMutableList())
+        return LrrrFiniteSequence((0 until number).map { it.toLrrrValue() }.toMutableList())
     }
 }
 
@@ -134,7 +134,7 @@ class Sum : MonadicFunction("S", true) {
                 is LrrrNull, is LrrrVoid -> 0.0
                 else -> 0.0
             }
-        }.toLrrValue()
+        }.toLrrrValue()
     }
 }
 
@@ -144,7 +144,7 @@ class Product : MonadicFunction("p",true) {
         argument as LrrrFiniteSequence<LrrrValue>
         var product = 1.0
         argument.list.map { (it as LrrrNumber).number }.forEach { product *= it }
-        return product.toLrrValue()
+        return product.toLrrrValue()
     }
 }
 
@@ -153,7 +153,7 @@ class Find : DiadicFunction("f", true, true) {
         val string = first.toString()
         val toFind = second.toString()
 
-        val foundStarts = toFind.toRegex().findAll(string).map { LrrrFiniteSequence(mutableListOf(it.range.first.toLrrValue(), it.range.last.toLrrValue()) )}.toMutableList()
+        val foundStarts = toFind.toRegex().findAll(string).map { LrrrFiniteSequence(mutableListOf(it.range.first.toLrrrValue(), it.range.last.toLrrrValue()) )}.toMutableList()
         return if (foundStarts.isEmpty()) LrrrNull.lrrrNull
         else LrrrFiniteSequence(foundStarts)
     }
@@ -165,7 +165,7 @@ class CreateFiniteSequence : PolyadicFunction("s",true) {
     }
 }
 
-class CreateInfiniteSequence : PolyadicFunction("I",true,listOf(0)) {
+class CreateInfiniteSequence : PolyadicFunction("c",true,listOf(0)) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

@@ -2,7 +2,7 @@ package com.adamratzman.lrrr.language.parsing
 
 import com.adamratzman.lrrr.language.types.*
 
-fun Any?.toLrrValue(): LrrrValue = when {
+fun Any?.toLrrrValue(): LrrrValue = when {
     this is LrrrValue -> this
     this == null -> LrrrNull.lrrrNull
     this == true -> LrrrBoolean.lrrrTrue
@@ -10,7 +10,7 @@ fun Any?.toLrrValue(): LrrrValue = when {
     this is String -> LrrrString(this)
     this is Number -> LrrrNumber(this.toDouble())
     this is Char -> LrrrChar(this)
-    this is List<*> -> LrrrFiniteSequence(this.map { it.toLrrValue() }.toMutableList())
+    this is List<*> -> LrrrFiniteSequence(this.map { it.toLrrrValue() }.toMutableList())
     else -> throw IllegalArgumentException("Unknown variable $this")
 }
 

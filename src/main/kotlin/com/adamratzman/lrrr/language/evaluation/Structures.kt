@@ -1,7 +1,7 @@
 package com.adamratzman.lrrr.language.evaluation
 
 import com.adamratzman.lrrr.language.parsing.LrrrContext
-import com.adamratzman.lrrr.language.parsing.toLrrValue
+import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
 
 abstract class LrrrStructure(val toEvaluate: LrrrFunction) {
@@ -48,7 +48,7 @@ class LrrrForStructure(
 ) : LrrrStructure(toEvaluate) {
     override fun evaluate(context: LrrrContext): LrrrValue {
         while (condition(value, context)) {
-            toEvaluate.evaluate(listOf(value.toLrrValue()), context)
+            toEvaluate.evaluate(listOf(value.toLrrrValue()), context)
 
             value = incrementorFunction(context, value)
         }

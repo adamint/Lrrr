@@ -5,7 +5,7 @@ import com.adamratzman.lrrr.language.evaluation.GenericEvaluationScope
 import com.adamratzman.lrrr.language.evaluation.globalEvaluation
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.StructureType
-import com.adamratzman.lrrr.language.parsing.toLrrValue
+import com.adamratzman.lrrr.language.parsing.toLrrrValue
 
 abstract class LrrrFunction(val identifier: String, val shouldEvaluateParameters: Boolean) : LrrrValue() {
     abstract fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue
@@ -29,7 +29,7 @@ abstract class TransformationFunction(identifier: String) : PolyadicFunction(ide
         val transformed = mutableListOf<LrrrValue>()
 
         val iterator =
-            objects?.list?.asIterable() ?: generateSequence({ 0 }) { it + 1 }.map { it.toLrrValue() }.asIterable()
+            objects?.list?.asIterable() ?: generateSequence({ 0 }) { it + 1 }.map { it.toLrrrValue() }.asIterable()
 
         iterator.forEachIndexed { i, obj ->
             transformed.add(
@@ -37,7 +37,7 @@ abstract class TransformationFunction(identifier: String) : PolyadicFunction(ide
                     context.newChildContext.apply {
                         contextValues.addAll(variables)
                         contextValues.add(LrrrVariable("v", obj.evaluate(this)))
-                        contextValues.add(LrrrVariable("i", i.toLrrValue()))
+                        contextValues.add(LrrrVariable("i", i.toLrrrValue()))
                         if (i != 0) contextValues.add(LrrrVariable("j", transformed[i - 1]))
                         contextValues.add(LrrrVariable("k", LrrrFiniteSequence(transformed.toMutableList())))
                     },
@@ -60,8 +60,8 @@ class NonadicSuspendedFunction(val arguments: List<List<LrrrValue>>):LrrrFunctio
 abstract class NonadicFunction(identifier: String, shouldEvaluateParameters: Boolean) :
     LrrrFunction(identifier, shouldEvaluateParameters) {
     abstract fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) =
-        evaluate(context.parentContext?.backreference, context)
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext)
+            = evaluate(context.backreference ?: context.parentContext?.backreference, context)
 
 }
 

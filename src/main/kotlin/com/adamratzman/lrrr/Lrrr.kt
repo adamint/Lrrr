@@ -11,6 +11,8 @@ import com.adamratzman.lrrr.language.types.LrrrNull
 import com.adamratzman.lrrr.language.types.LrrrVariable
 import com.adamratzman.lrrr.language.types.LrrrVoid
 import com.adamratzman.lrrr.language.utils.getAllFunctions
+import com.adamratzman.lrrr.language.utils.getControlStructureFunctions
+import com.adamratzman.lrrr.language.utils.getNumberFunctions
 import com.adamratzman.lrrr.language.utils.parseForLrrrValues
 import java.util.*
 
@@ -33,9 +35,23 @@ fun main(args: Array<String>) {
 
             if (result !is LrrrNoReturn) println(result)
         } else if (args[0] == "functions") {
-            globalLrrr.functions.sortedBy { it.identifier.getOrNull(0)?.toInt() ?: 0 }
-                .joinToString("\n") { it.identifier + ": " + it::class.simpleName }
-                .let { println("Function List:\n$it") }
+            println("Function List")
+            println()
+            println(
+                globalLrrr.functions.sortedBy { it.identifier.getOrNull(0)?.toInt() ?: 0 }
+                    .joinToString("\n") { it.identifier + ": " + it::class.simpleName } + "\n\nStructure & Type List\n" +
+                        "Numbers:\n${getNumberFunctions().joinToString("\n") { it.identifier }}\n" +
+                        "Types + Control Structures:\n${getControlStructureFunctions().joinToString("\n") { it.identifier }}"
+            )
+            println()
+            println("Used Characters")
+            println(
+                globalLrrr.functions.map { it.identifier }.sortedBy {
+                    it.getOrNull(0)?.toInt() ?: 0
+                }.joinToString("\n") + "\n"
+                        + getNumberFunctions().joinToString("\n") { it.identifier } + "\n" +
+                        getControlStructureFunctions().filter { it.identifier.length == 1 }.joinToString("\n") { it.identifier }
+            )
         }
     } else {
         println(">>> Lrrr REPL (Version $version)")

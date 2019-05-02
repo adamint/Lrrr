@@ -3,7 +3,7 @@ package com.adamratzman.lrrr.language.evaluation
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.ParseObj
 import com.adamratzman.lrrr.language.parsing.StructureType
-import com.adamratzman.lrrr.language.parsing.toLrrValue
+import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
 
 interface Evaluatable {
@@ -25,13 +25,13 @@ data class ForEvaluationScope(
 
             if (evaluatedValue is LrrrNumber || evaluatedValue is LrrrString || evaluatedValue is LrrrFiniteSequence<*>) {
                 val sequence = if (evaluatedValue is LrrrNumber) {
-                    LrrrFiniteSequence((1..evaluatedValue.numberInteger).map { it.toLrrValue() }.toMutableList())
+                    LrrrFiniteSequence((1..evaluatedValue.numberInteger).map { it.toLrrrValue() }.toMutableList())
                 } else evaluatedValue as LrrrFiniteSequence<LrrrValue>
 
                 results.addAll(sequence.list.mapIndexed { i, value ->
                     val forContext = context.newChildContext.apply {
-                        contextValues.add(LrrrVariable("i", i.toLrrValue()))
-                        contextValues.add(LrrrVariable("j", (i + 1).toLrrValue()))
+                        contextValues.add(LrrrVariable("i", i.toLrrrValue()))
+                        contextValues.add(LrrrVariable("j", (i + 1).toLrrrValue()))
                         contextValues.add(LrrrVariable("v", value))
                     }
 
@@ -44,8 +44,8 @@ data class ForEvaluationScope(
                     var i = 0
                     while (true) {
                         val forContext = context.newChildContext.apply {
-                            contextValues.add(LrrrVariable("i", i.toLrrValue()))
-                            contextValues.add(LrrrVariable("j", (i + 1).toLrrValue()))
+                            contextValues.add(LrrrVariable("i", i.toLrrrValue()))
+                            contextValues.add(LrrrVariable("j", (i + 1).toLrrrValue()))
                         }
                         objects.map { inner -> inner.evaluate(forContext) }
                             .let { result -> if (result.size == 1) result.first() else LrrrFiniteSequence(result.filter { it !is LrrrNoReturn }.toMutableList()) }
@@ -71,7 +71,7 @@ data class ForEvaluationScope(
                 ?: (evaluatedVariable as? LrrrString)?.string?.length?.let { LrrrNumber(it.toDouble()) }
                 ?: (evaluatedVariable as? LrrrChar)?.number?.let { LrrrNumber(it) }
                 ?: (evaluatedVariable as? LrrrFiniteSequence<*>)?.list?.size?.let { LrrrNumber(it.toDouble()) }
-                ?: (evaluatedVariable as? LrrrBoolean)?.let { (-1).toLrrValue() }
+                ?: (evaluatedVariable as? LrrrBoolean)?.let { (-1).toLrrrValue() }
                 ?: throw IllegalArgumentException("Evaluated variable $evaluatedVariable in $this is not a string, char, sequence, or number!")
         } ?: LrrrNumber(0.toDouble())
 

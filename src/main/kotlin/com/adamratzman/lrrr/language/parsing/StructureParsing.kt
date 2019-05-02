@@ -129,24 +129,7 @@ open class ParseObj(val code: String) {
                             if (function !is TransformationFunction) {
                                 allLrrrParams.add(0, FunctionInvocation(previousArguments, function))
                             } else {
-                                /*
-                                        while (lrrrValues.any { it is FunctionInvocation && it.function is TransformationFunction && it.transformer == null }) {
-            for (i in lrrrValues.lastIndex downTo 0) {
-                val param = lrrrValues[i]
-                if (param is FunctionInvocation && param.function is TransformationFunction && param.transformer == null) {
-                    if (i == lrrrValues.lastIndex) {
-                        param.transformer =
-                            listOf(FunctionInvocation(listOf("v".toLrrValue()), LrrrVariableResolverFunction()))
-                    } else {
-                        param.transformer = lrrrValues.subList(i + 1, lrrrValues.size)
-                        lrrrValues = lrrrValues.subList(0, i + 1)
-                    }
 
-                    break
-                }
-            }
-        }
-                                 */
                                 val after = allLrrrParams.toMutableList()
 
                                 while (after.any { it is TransformationFunction }) {
@@ -156,7 +139,7 @@ open class ParseObj(val code: String) {
 
                                     val transformer = if (index == after.lastIndex) listOf(
                                         FunctionInvocation(
-                                            listOf("v".toLrrValue()),
+                                            listOf("v".toLrrrValue()),
                                             LrrrVariableResolverFunction()
                                         )
                                     )

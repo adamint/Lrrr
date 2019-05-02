@@ -1,7 +1,7 @@
 package com.adamratzman.lrrr.language.builtins
 
 import com.adamratzman.lrrr.language.parsing.LrrrContext
-import com.adamratzman.lrrr.language.parsing.toLrrValue
+import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
 
 class LrrrVariableResolverFunction : MonadicFunction("", false) {
@@ -16,6 +16,6 @@ class LrrrVariableResolverFunction : MonadicFunction("", false) {
 class IsInteger : MonadicFunction("I", true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
-        return argument.isInteger().toLrrValue()
+        return argument.isInteger().toLrrrValue()
     }
 }

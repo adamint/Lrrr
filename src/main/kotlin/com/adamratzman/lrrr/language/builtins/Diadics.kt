@@ -1,9 +1,8 @@
 package com.adamratzman.lrrr.language.builtins
 
 import com.adamratzman.lrrr.language.parsing.LrrrContext
-import com.adamratzman.lrrr.language.parsing.toLrrValue
+import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
-import com.adamratzman.lrrr.language.utils.mod
 
 @Suppress("UNCHECKED_CAST")
 class Addition : DiadicFunction("+", true, true) {
@@ -19,7 +18,7 @@ class Addition : DiadicFunction("+", true, true) {
             first is LrrrFiniteSequence<*> -> {
                 first as LrrrFiniteSequence<LrrrValue>
                 return if (second is LrrrFiniteSequence<*>) {
-                    LrrrFiniteSequence((first.list + second.list).map { it.toLrrValue() }.toMutableList())
+                    LrrrFiniteSequence((first.list + second.list).map { it.toLrrrValue() }.toMutableList())
                 } else if (second is LrrrVoid) first
                 else LrrrFiniteSequence((first.list + second).toMutableList())
             }
@@ -28,7 +27,7 @@ class Addition : DiadicFunction("+", true, true) {
                     is LrrrBoolean -> first.boolean && second.boolean
                     is LrrrNumber -> first.boolean && second.isInteger() && second.numberInteger == 1
                     else -> second != LrrrNull.lrrrNull && second != LrrrVoid.lrrrVoid
-                }.toLrrValue()
+                }.toLrrrValue()
             }
             else -> LrrrFiniteSequence(mutableListOf(first, second))
         }
@@ -55,6 +54,6 @@ class Equals : DiadicFunction("=",true,true) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         first as LrrrType
         second as LrrrType
-        return first.identical(second).toLrrValue()
+        return first.identical(second).toLrrrValue()
     }
 }

@@ -17,8 +17,8 @@ internal class TypeParsingKtTest {
 
     @Test
     fun toLrrValue() {
-        println("1201023.9k".toLrrValue())
-        println(1293.toLrrValue())
-        println('a'.toLrrValue())
+        println("1201023.9k".toLrrrValue())
+        println(1293.toLrrrValue())
+        println('a'.toLrrrValue())
     }
 }
