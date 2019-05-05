@@ -90,12 +90,15 @@ open class ParseObj(val code: String) {
                 is NonadicFunction -> allLrrrParams[functionIndex] = FunctionInvocation(listOf(), function)
                 else -> {
                     if (functionIndex == 0) {
-                        if (function !is PolyadicFunction) {
-                            allLrrrParams.add(0, FunctionInvocation(listOf(), GetLastCurrentContextValue()))
+                        if (function.allowNoParameters) {
+                            allLrrrParams[functionIndex] = FunctionInvocation(listOf(LrrrVoid.lrrrVoid), function)
                         } else {
-                            allLrrrParams.add(0, FunctionInvocation(listOf(), GetAllCurrentContextValues()))
+                            if (function !is PolyadicFunction) {
+                                allLrrrParams.add(0, FunctionInvocation(listOf(), GetLastCurrentContextValue()))
+                            } else {
+                                allLrrrParams.add(0, FunctionInvocation(listOf(), GetAllCurrentContextValues()))
+                            }
                         }
-
                         continue@loop
                     }
 

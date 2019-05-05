@@ -3,11 +3,12 @@ package com.adamratzman.lrrr.language.builtins
 import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
+import com.adamratzman.lrrr.language.utils.factors
 import com.adamratzman.lrrr.language.utils.gamma
 import com.adamratzman.lrrr.language.utils.mod
-import kotlin.math.sqrt
+import com.adamratzman.lrrr.language.utils.primes
 
-class ToBinary : MonadicFunction("b", true) {
+class ToBinary : MonadicFunction("b", true,false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         return when (argument) {
             is LrrrNumber -> argument.numberInteger.toString(2).toLrrrValue()
@@ -17,14 +18,14 @@ class ToBinary : MonadicFunction("b", true) {
     }
 }
 
-class FromBinary : MonadicFunction("Ɓ", true) {
+class FromBinary : MonadicFunction("Ɓ", true,false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrString
         return argument.string.toInt(2).toLrrrValue()
     }
 }
 
-class ToBaseTen : DiadicFunction("Ṭ", true, true) {
+class ToBaseTen : DiadicFunction("Ṭ", true, true,false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         first as LrrrString
         second as LrrrNumber
@@ -33,7 +34,7 @@ class ToBaseTen : DiadicFunction("Ṭ", true, true) {
     }
 }
 
-class ConvertBase : PolyadicFunction("Ṿ", true) {
+class ConvertBase : PolyadicFunction("Ṿ", true,allowNoParameters = false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         val number = arguments[0]
         if (number is LrrrNumber) {
@@ -49,7 +50,7 @@ class ConvertBase : PolyadicFunction("Ṿ", true) {
 }
 
 @Suppress("UNCHECKED_CAST")
-class Multiplication : DiadicFunction("*", true, true) {
+class Multiplication : DiadicFunction("*", true, true,false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         second as LrrrNumber
         return when (first) {
@@ -67,7 +68,7 @@ class Multiplication : DiadicFunction("*", true, true) {
     }
 }
 
-class ToNumber : MonadicFunction("N", true) {
+class ToNumber : MonadicFunction("N", true,false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         return when (argument) {
             is LrrrNumber -> argument.number
@@ -79,7 +80,7 @@ class ToNumber : MonadicFunction("N", true) {
     }
 }
 
-class Length : MonadicFunction("L", true) {
+class Length : MonadicFunction("L", true,false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         return when (argument) {
             is LrrrVoid -> 0.0
@@ -90,7 +91,7 @@ class Length : MonadicFunction("L", true) {
 }
 
 
-class ToChar : MonadicFunction("C", true) {
+class ToChar : MonadicFunction("C", true,false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         return when (argument) {
             is LrrrNumber -> LrrrChar(argument.numberInteger.toChar())
@@ -100,7 +101,7 @@ class ToChar : MonadicFunction("C", true) {
     }
 }
 
-class Subtraction : DiadicFunction("⁻", true, true) {
+class Subtraction : DiadicFunction("⁻", true, true,false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         return when {
             first is LrrrNumber && second is LrrrNumber -> {
@@ -119,7 +120,7 @@ class Subtraction : DiadicFunction("⁻", true, true) {
     }
 }
 
-class Division : DiadicFunction("÷", true, true) {
+class Division : DiadicFunction("÷", true, true,false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         first as LrrrNumber
         second as LrrrNumber
@@ -128,7 +129,7 @@ class Division : DiadicFunction("÷", true, true) {
     }
 }
 
-class Modulus : DiadicFunction("%", true, true) {
+class Modulus : DiadicFunction("%", true, true,false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         first as LrrrNumber
         second as LrrrNumber
@@ -137,14 +138,24 @@ class Modulus : DiadicFunction("%", true, true) {
     }
 }
 
-class Inverse : MonadicFunction("Ȥ", true) {
+class Inverse : MonadicFunction("Ȥ", true,false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
         return (1.0 / argument.number).toLrrrValue()
     }
 }
 
-class IsPrime : MonadicFunction("G",true) {
+
+class Primes : MonadicFunction("x",true,true) {
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        return if (argument is LrrrNumber) {
+            primes().elementAt(argument.numberInteger).toLrrrValue()
+        } else LrrrGeneratingSequence(null, listOf(), primes().map { it.toLrrrValue() })
+    }
+}
+
+
+class IsPrime : MonadicFunction("G", true, false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
         val number = argument.numberInteger
@@ -153,10 +164,17 @@ class IsPrime : MonadicFunction("G",true) {
 
 }
 
-class Factorial : MonadicFunction("!",true) {
+class Factorial : MonadicFunction("!", true, true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
-        argument as LrrrNumber
-        return gamma(argument.number).toLrrrValue()
+        return if (argument is LrrrNumber) {
+            gamma(argument.number).toLrrrValue()
+        } else LrrrGeneratingSequence({ index, _ -> LrrrNumber(gamma((index + 1).toDouble())) }, listOf())
     }
 }
 
+class Factors : MonadicFunction("u",true,false) {
+    override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
+        argument as LrrrNumber
+       return LrrrFiniteSequence(factors(argument.numberInteger).map { it.toLrrrValue() }.toMutableList())
+    }
+}

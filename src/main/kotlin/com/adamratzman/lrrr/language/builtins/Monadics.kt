@@ -4,7 +4,7 @@ import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
 
-class LrrrVariableResolverFunction : MonadicFunction("", false) {
+class LrrrVariableResolverFunction : MonadicFunction("", false, false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         val string = (argument as? LrrrString)?.string ?: (argument as? LrrrChar)?.char?.toString()
         ?: (argument as LrrrNumber).number.toChar().toString()
@@ -13,7 +13,7 @@ class LrrrVariableResolverFunction : MonadicFunction("", false) {
     }
 }
 
-class IsInteger : MonadicFunction("I", true) {
+class IsInteger : MonadicFunction("I", true, false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
         return argument.isInteger().toLrrrValue()

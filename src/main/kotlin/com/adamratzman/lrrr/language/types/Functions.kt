@@ -7,16 +7,22 @@ import com.adamratzman.lrrr.language.parsing.LrrrContext
 import com.adamratzman.lrrr.language.parsing.StructureType
 import com.adamratzman.lrrr.language.parsing.toLrrrValue
 
-abstract class LrrrFunction(val identifier: String, val shouldEvaluateParameters: Boolean) : LrrrValue() {
+abstract class LrrrFunction(
+    val identifier: String,
+    val shouldEvaluateParameters: Boolean,
+    val allowNoParameters: Boolean
+) : LrrrValue() {
     abstract fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue
     override fun evaluate(context: LrrrContext) = this
 }
 
-abstract class ReplacementFunction(identifier: String, val replaceWith: String) : LrrrFunction(identifier, true) {
+abstract class ReplacementFunction(identifier: String, val replaceWith: String) :
+    LrrrFunction(identifier, true, false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) = LrrrVoid.lrrrVoid
 }
 
-abstract class TransformationFunction(identifier: String) : PolyadicFunction(identifier, true) {
+abstract class TransformationFunction(identifier: String) :
+    PolyadicFunction(identifier, true, allowNoParameters = false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) = throw IllegalStateException()
     abstract fun evaluate(arguments: List<LrrrValue>, transformer: List<Evaluatable>, context: LrrrContext): LrrrValue
 
@@ -58,21 +64,26 @@ class NonadicSuspendedFunction(val arguments: List<List<LrrrValue>>):LrrrFunctio
 }*/
 
 abstract class NonadicFunction(identifier: String, shouldEvaluateParameters: Boolean) :
-    LrrrFunction(identifier, shouldEvaluateParameters) {
+    LrrrFunction(identifier, shouldEvaluateParameters, false) {
     abstract fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue
-    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext)
-            = evaluate(context.backreference ?: context.parentContext?.backreference, context)
+    override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) =
+        evaluate(context.backreference ?: context.parentContext?.backreference, context)
 
 }
 
-abstract class MonadicFunction(identifier: String, shouldEvaluateParameters: Boolean) :
-    LrrrFunction(identifier, shouldEvaluateParameters) {
+abstract class MonadicFunction(identifier: String, shouldEvaluateParameters: Boolean, allowNoParameters: Boolean) :
+    LrrrFunction(identifier, shouldEvaluateParameters, allowNoParameters) {
     abstract fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) = evaluate(arguments[0], context)
 }
 
-abstract class DiadicFunction(identifier: String, shouldEvaluateParameters: Boolean, val strictRightArgument: Boolean) :
-    LrrrFunction(identifier, shouldEvaluateParameters) {
+abstract class DiadicFunction(
+    identifier: String,
+    shouldEvaluateParameters: Boolean,
+    val strictRightArgument: Boolean,
+    allowNoParameters: Boolean
+) :
+    LrrrFunction(identifier, shouldEvaluateParameters, allowNoParameters) {
     abstract fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext) =
         evaluate(arguments[0], arguments[1], context)
@@ -81,9 +92,9 @@ abstract class DiadicFunction(identifier: String, shouldEvaluateParameters: Bool
 abstract class PolyadicFunction(
     identifier: String,
     shouldEvaluateParameters: Boolean,
-    val unevaluatedParamIndices: List<Int> = listOf()
-) :
-    LrrrFunction(identifier, shouldEvaluateParameters)
+    val unevaluatedParamIndices: List<Int> = listOf(),
+    allowNoParameters: Boolean
+) : LrrrFunction(identifier, shouldEvaluateParameters, allowNoParameters)
 
 data class FunctionInvocation(
     val parameters: List<Evaluatable>,

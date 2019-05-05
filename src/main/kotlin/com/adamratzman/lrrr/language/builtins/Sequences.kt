@@ -6,7 +6,7 @@ import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
 import com.adamratzman.lrrr.language.utils.splitIndices
 
-class Clear : MonadicFunction("c", true) {
+class Clear : MonadicFunction("c", true, true) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrFiniteSequence<*>
         argument.list.clear()
@@ -15,7 +15,7 @@ class Clear : MonadicFunction("c", true) {
 }
 
 @Suppress("UNCHECKED_CAST")
-class AddToSequence : PolyadicFunction("a", true) {
+class AddToSequence : PolyadicFunction("a", true, allowNoParameters = false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         val sequence = arguments.last() as LrrrFiniteSequence<Evaluatable>
         sequence.list.addAll(arguments)
@@ -24,7 +24,7 @@ class AddToSequence : PolyadicFunction("a", true) {
 }
 
 @Suppress("UNCHECKED_CAST")
-class RemoveFromSequence : PolyadicFunction("r", true) {
+class RemoveFromSequence : PolyadicFunction("r", true, allowNoParameters = false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         val sequence = arguments.last() as LrrrFiniteSequence<LrrrValue>
         val indices = arguments.filter { it is LrrrNumber }.map { (it as LrrrNumber).numberInteger }
@@ -34,7 +34,7 @@ class RemoveFromSequence : PolyadicFunction("r", true) {
 }
 
 @Suppress("UNCHECKED_CAST")
-class GetOneFromSequenceByIndex : DiadicFunction("g", true,true) {
+class GetOneFromSequenceByIndex : DiadicFunction("g", true, true, false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         val sequence = first as? LrrrSequence<LrrrValue> ?: second as LrrrSequence<LrrrValue>
         val index = (first as? LrrrNumber ?: second as LrrrNumber).numberInteger
@@ -57,7 +57,7 @@ class GetOneFromSequenceByIndex : DiadicFunction("g", true,true) {
 
 
 @Suppress("UNCHECKED_CAST")
-class GetManyFromSequenceByIndex : PolyadicFunction("m", true) {
+class GetManyFromSequenceByIndex : PolyadicFunction("m", true, allowNoParameters = false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         val sequence = arguments.last() as LrrrFiniteSequence<LrrrValue>
         val indices = arguments.subList(0, arguments.lastIndex).map { it as LrrrNumber }.map { it.numberInteger }
@@ -74,7 +74,7 @@ class GetManyFromSequenceByIndex : PolyadicFunction("m", true) {
 // class Reverse:MonadicFunction("")
 
 @Suppress("UNCHECKED_CAST")
-class SubsequenceFunction : PolyadicFunction("l", true) {
+class SubsequenceFunction : PolyadicFunction("l", true, allowNoParameters = false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         val sequence = arguments.last() as LrrrFiniteSequence<LrrrValue>
         return when {
@@ -95,7 +95,7 @@ class SubsequenceFunction : PolyadicFunction("l", true) {
     }
 }
 
-class RangeFunction : MonadicFunction("R", true) {
+class RangeFunction : MonadicFunction("R", true, allowNoParameters = false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
         val number = argument.numberInteger
@@ -103,7 +103,7 @@ class RangeFunction : MonadicFunction("R", true) {
     }
 }
 
-class ExclusiveBoundsRange : MonadicFunction("B", true) {
+class ExclusiveBoundsRange : MonadicFunction("B", true, allowNoParameters = false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
         val number = argument.numberInteger
@@ -112,7 +112,7 @@ class ExclusiveBoundsRange : MonadicFunction("B", true) {
 }
 
 
-class UntilFunction : MonadicFunction("U", true) {
+class UntilFunction : MonadicFunction("U", true, allowNoParameters = false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrNumber
         val number = argument.numberInteger
@@ -121,7 +121,7 @@ class UntilFunction : MonadicFunction("U", true) {
 }
 
 @Suppress("UNCHECKED_CAST")
-class Sum : MonadicFunction("S", true) {
+class Sum : MonadicFunction("S", true, allowNoParameters = false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrFiniteSequence<LrrrValue>
         val list = argument.list
@@ -139,7 +139,7 @@ class Sum : MonadicFunction("S", true) {
 }
 
 @Suppress("UNCHECKED_CAST")
-class Product : MonadicFunction("p",true) {
+class Product : MonadicFunction("p", true, allowNoParameters = false) {
     override fun evaluate(argument: LrrrValue, context: LrrrContext): LrrrValue {
         argument as LrrrFiniteSequence<LrrrValue>
         var product = 1.0
@@ -148,24 +148,26 @@ class Product : MonadicFunction("p",true) {
     }
 }
 
-class Find : DiadicFunction("f", true, true) {
+class Find : DiadicFunction("f", true, true, allowNoParameters = false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         val string = first.toString()
         val toFind = second.toString()
 
-        val foundStarts = toFind.toRegex().findAll(string).map { LrrrFiniteSequence(mutableListOf(it.range.first.toLrrrValue(), it.range.last.toLrrrValue()) )}.toMutableList()
+        val foundStarts = toFind.toRegex().findAll(string)
+            .map { LrrrFiniteSequence(mutableListOf(it.range.first.toLrrrValue(), it.range.last.toLrrrValue())) }
+            .toMutableList()
         return if (foundStarts.isEmpty()) LrrrNull.lrrrNull
         else LrrrFiniteSequence(foundStarts)
     }
 }
 
-class CreateFiniteSequence : PolyadicFunction("s",true) {
+class CreateFiniteSequence : PolyadicFunction("s", true, allowNoParameters = false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         return LrrrFiniteSequence(arguments.toMutableList())
     }
 }
 
-class CreateInfiniteSequence : PolyadicFunction("c",true,listOf(0)) {
+class CreateInfiniteSequence : PolyadicFunction("c", true, listOf(0), allowNoParameters = false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }

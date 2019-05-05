@@ -5,7 +5,7 @@ import com.adamratzman.lrrr.language.parsing.toLrrrValue
 import com.adamratzman.lrrr.language.types.*
 
 @Suppress("UNCHECKED_CAST")
-class Addition : DiadicFunction("+", true, true) {
+class Addition : DiadicFunction("+", true, true, false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         return when {
             first is LrrrNumber && second is LrrrNumber -> {
@@ -34,7 +34,7 @@ class Addition : DiadicFunction("+", true, true) {
     }
 }
 
-class GreaterThan : DiadicFunction(">", true, true) {
+class GreaterThan : DiadicFunction(">", true, true, false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         first as LrrrNumber
         second as LrrrNumber
@@ -42,7 +42,7 @@ class GreaterThan : DiadicFunction(">", true, true) {
     }
 }
 
-class LessThan : DiadicFunction("<", true, true) {
+class LessThan : DiadicFunction("<", true, true, false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         first as LrrrNumber
         second as LrrrNumber
@@ -50,7 +50,7 @@ class LessThan : DiadicFunction("<", true, true) {
     }
 }
 
-class Equals : DiadicFunction("=",true,true) {
+class Equals : DiadicFunction("=", true, true, false) {
     override fun evaluate(first: LrrrValue, second: LrrrValue, context: LrrrContext): LrrrValue {
         first as LrrrType
         second as LrrrType

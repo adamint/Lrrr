@@ -20,3 +20,8 @@ fun gamma(x: Double): Double {
     val abs = abs(result.roundToInt().toDouble() - result)
     return if (abs <= 0.001) result.roundToInt().toDouble() else result
 }
+
+fun nextPrime(i: Int): Int = generateSequence(i + 1, { it + 1 }).first { num -> (2..num / 2).none { num % it == 0 } }
+fun primes() = generateSequence(2, { last -> nextPrime(last) })
+
+fun factors(i: Int) = (1..i / 2).filter { i % it == 0 } + i

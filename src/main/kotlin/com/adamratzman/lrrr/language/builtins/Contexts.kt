@@ -26,8 +26,7 @@ class GetGlobalContext : NonadicFunction("Ḃ", true) {
 class GetLastCurrentContextValue : NonadicFunction("ð", true) {
     override fun evaluate(backreference: LrrrValue?, context: LrrrContext): LrrrValue {
         return context.contextValues.find { it.identifier == "v" }?.value
-            ?: context.contextValues.find { it.identifier == "i" }?.value ?:
-        context.contextValues.lastOrNull()?.value
+            ?: context.contextValues.find { it.identifier == "i" }?.value ?: context.contextValues.lastOrNull()?.value
             ?: context.backreference
             ?: context.parentContext?.contextValues?.lastOrNull()?.value
             ?: context.parentContext?.backreference
@@ -54,14 +53,14 @@ class SecondGlobalElement : NonadicFunction("|", false) {
 }
 
 
-class AddToCurrentContext : PolyadicFunction("Ƈ", true) {
+class AddToCurrentContext : PolyadicFunction("Ƈ", true, allowNoParameters = false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         context.contextValues.addAll(arguments.map { LrrrVariable(null, it) })
         return LrrrVoid.lrrrVoid
     }
 }
 
-class AddToGlobalContext : PolyadicFunction("ɠ", true) {
+class AddToGlobalContext : PolyadicFunction("ɠ", true, allowNoParameters = false) {
     override fun evaluate(arguments: List<LrrrValue>, context: LrrrContext): LrrrValue {
         context.getGlobalContext().contextValues.addAll(arguments.map { LrrrVariable(null, it) })
         return LrrrVoid.lrrrVoid

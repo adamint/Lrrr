@@ -10,7 +10,7 @@ abstract class LrrrSequence<T> : LrrrType() {
     abstract fun get(index: Int): T
 }
 
-open class LrrrFiniteSequence<T: Evaluatable>(var list: MutableList<T>) : LrrrSequence<T>() {
+open class LrrrFiniteSequence<T : Evaluatable>(var list: MutableList<T>) : LrrrSequence<T>() {
     override fun takeFirst(n: Int) = list.take(n)
     override fun take(start: Int, end: Int) = list.subList(start, end)
 
@@ -30,11 +30,17 @@ open class LrrrFiniteSequence<T: Evaluatable>(var list: MutableList<T>) : LrrrSe
 
 }
 
-class LrrrGeneratingSequence<T>(val generator: (Int, List<T>) -> T, val initialValues: List<T>) : LrrrSequence<T>() {
+class LrrrGeneratingSequence<T : Evaluatable>(
+    val generator: ((Int, List<T>) -> T)?,
+    val initialValues: List<T>,
+    val generatorSequence: Sequence<T>? = null
+) : LrrrSequence<T>() {
     var generated = mutableListOf<T>()
 
-    private fun generateTo(n:Int) {
-        while (generated.size < n) generated.add(generator(generated.size, generated))
+    private fun generateTo(n: Int) {
+        while (generated.size < n) generated.add(
+            generatorSequence?.elementAt(generated.size) ?: generator!!.invoke(generated.size, generated)
+        )
     }
 
     override fun takeFirst(n: Int): List<T> {
@@ -44,7 +50,7 @@ class LrrrGeneratingSequence<T>(val generator: (Int, List<T>) -> T, val initialV
 
     override fun take(start: Int, end: Int): List<T> {
         generateTo(end)
-        return generated.subList(start,end)
+        return generated.subList(start, end)
     }
 
 
@@ -56,7 +62,7 @@ class LrrrGeneratingSequence<T>(val generator: (Int, List<T>) -> T, val initialV
     override fun identical(other: Any?) =
         other is LrrrGeneratingSequence<*> && other.generator == generator && other.initialValues == initialValues
 
-    override fun toString() = "Lrrr Generating Sequence of initial size ${initialValues.size}"
+    override fun toString() = "Lrrr (${if (generatorSequence != null) "KSequence" else "Lambda"}-Based) Generating Sequence of initial size ${initialValues.size}"
 
     override fun evaluate(context: LrrrContext) = this
 }
